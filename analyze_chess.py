@@ -8,7 +8,7 @@ engine_path = r"C:\Users\April\stockfish\stockfish\stockfish-windows-x86-64-avx2
 board = chess.Board()
 
 # Load the position from a FEN string
-fen = "rnbqkb1r/ppp2ppp/8/3pN3/4n3/8/PPPPQPPP/RNB1KB1R w KQkq d6 0 5"
+fen = "foo"
 board.set_fen(fen)
 
 # Initialize the engine
