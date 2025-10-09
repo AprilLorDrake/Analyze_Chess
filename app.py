@@ -1,7 +1,11 @@
 from flask import Flask, request, render_template_string
-import subprocess
+import chess
+import chess.engine
 
 app = Flask(__name__)
+
+# Path to the Stockfish engine
+engine_path = r"C:\Users\April\stockfish\stockfish\stockfish-windows-x86-64-avx2.exe"
 
 @app.route('/')
 def index():
@@ -15,22 +19,15 @@ def index():
 @app.route('/submit', methods=['POST'])
 def submit():
     fen = request.form['fen']
-    with open('analyze_chess.py', 'r') as file:
-        script = file.read()
+    board = chess.Board()
+    board.set_fen(fen)
 
-    # Replace the FEN line in the script
-    script = script.replace(
-        'fen = "foo"',
-        f'fen = "{fen}"'
-    )
+    engine = chess.engine.SimpleEngine.popen_uci(engine_path)
+    result = engine.play(board, chess.engine.Limit(time=2.0))
+    engine.quit()
 
-    with open('analyze_chess_temp.py', 'w') as file:
-        file.write(script)
-
-    # Run the modified script and capture the output
-    result = subprocess.run(['python', 'analyze_chess_temp.py'], capture_output=True, text=True)
-
-    return f"Best move: {result.stdout}"
+    return f"Best move: {result.move}"
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='127.0.0.1', port=5000)
+
