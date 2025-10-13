@@ -1,4 +1,4 @@
-import ctypes
+﻿import ctypes
 def is_file_locked(filepath):
     try:
         fh = open(filepath, 'a')
@@ -44,8 +44,8 @@ def _write_text(path, text):
 def board_to_html(board, highlight_move=None):
     """Convert chess board to beautiful HTML/CSS representation."""
     piece_unicode = {
-        'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
-        'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+        'r': 'â™œ', 'n': 'â™ž', 'b': 'â™', 'q': 'â™›', 'k': 'â™š', 'p': 'â™Ÿ',
+        'R': 'â™–', 'N': 'â™˜', 'B': 'â™—', 'Q': 'â™•', 'K': 'â™”', 'P': 'â™™'
     }
     
     html = ['<div class="chess-board">']
@@ -475,8 +475,7 @@ def analyze_chess_move():
                         cursor: pointer; 
                         margin-top: 10px;
                         box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
-                    }
-                    .fen-input.analyzed { background-color: #f0f8ff; color: #666; }
+                    }                    .fen-input.analyzed { background-color: #f0f8ff; color: #666; }
                     .reset-btn { 
                         padding: 12px 30px; 
                         font-size: 16px; 
@@ -633,8 +632,7 @@ def analyze_chess_move():
                  .file-labels {
                      margin-top: 2px;
                  }
-                </style>
-                <script>
+                </style>                <script>
                     function loadSampleFEN(fen) {
                         document.getElementById('fen').value = fen;
                     }
@@ -711,7 +709,7 @@ def analyze_chess_move():
                     <!-- Stockfish Engine Section -->
                     <div style="margin-bottom: 25px; padding: 15px; background-color: rgba(142, 68, 173, 0.05); border: 1px solid #d4b3ff; border-radius: 8px;">
                         <h4 style="color: #4a2c7a; margin-bottom: 15px; display: flex; align-items: center;">
-                            <span style="font-size: 20px; margin-right: 10px;">♚</span>Stockfish Chess Engine
+                            <span style="font-size: 20px; margin-right: 10px;">â™š</span>Stockfish Chess Engine
                         </h4>
                         {% if current %}
                             <div style="margin-bottom: 10px;"><strong>Path:</strong> {{current}}</div>
@@ -744,7 +742,7 @@ def analyze_chess_move():
                     {% for dep in python_deps %}
                     <div style="margin-bottom: 25px; padding: 15px; background-color: rgba(142, 68, 173, 0.05); border: 1px solid #d4b3ff; border-radius: 8px;">
                         <h4 style="color: #4a2c7a; margin-bottom: 15px; display: flex; align-items: center;">
-                            <span style="font-size: 20px; margin-right: 10px;">🐍</span>{{ dep.name }} Package
+                            <span style="font-size: 20px; margin-right: 10px;">ðŸ</span>{{ dep.name }} Package
                         </h4>
                         <div style="margin-bottom: 10px;"><strong>Current Version:</strong> {{ dep.current_version }}</div>
                         <div style="margin-bottom: 10px;"><strong>Latest Available:</strong> {{ dep.latest_version }}</div>
@@ -768,7 +766,7 @@ def analyze_chess_move():
                     {% endfor %}
                     
                     <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #d4b3ff; font-size: 12px; color: #7a6b93;">
-                        © 2025 Drake Svc LLC. All rights reserved.<br>
+                        Â© 2025 Drake Svc LLC. All rights reserved.<br>
                         <a href="https://github.com/AprilLorDrake" target="_blank" style="color: #8b5fbf; text-decoration: none; margin-top: 5px; display: inline-block;">
                             GitHub: AprilLorDrake
                         </a>
@@ -1029,3 +1027,4 @@ if __name__ == "__main__":
         app.run(host=host, port=port)
     except Exception as e:
         print(f"Flask failed to start: {e}")
+
