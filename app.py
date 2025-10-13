@@ -137,10 +137,10 @@ def generate_fallback_recommendation(board):
         scored_moves.sort(key=lambda x: x[1], reverse=True)
         best_move = scored_moves[0][0]
         
-        return f"{best_move} (Custom Chess Logic AI)", board_to_html(board, best_move)
+        return f"{best_move}", board_to_html(board, best_move)
         
     except Exception as e:
-        return f"AI analysis failed: {e}", ""
+        return f"Analysis failed: {e}", ""
 
 def get_python_dependencies_info():
     """Get version information for all Python dependencies."""
@@ -375,6 +375,21 @@ def _extract_numeric_version(s: str) -> str | None:
     m = re.search(r"(\d+(?:\.\d+)*)", s)
     return m.group(1) if m else None
 
+
+def has_previous_engine():
+    """Check if there's a previous engine version to rollback to"""
+    import os
+    p = _paths()
+    return os.path.exists(p['previous'])
+
+def has_previous_package(package_name):
+    """Check if there's a previous package version to rollback to"""
+    # For now, we'll assume packages can be rolled back if they've been updated
+    # In a more sophisticated system, you'd track package installation history
+    import os
+    backup_file = f'.{package_name}_previous'
+    return os.path.exists(backup_file)
+
 @app.route('/')
 @app.route('/analyze_chess_move')
 def analyze_chess_move():
@@ -520,6 +535,18 @@ def analyze_chess_move():
                         transform: translateY(-1px);
                         box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
                     }
+                    .submit-btn:disabled {
+                        background: linear-gradient(135deg, #cccccc 0%, #999999 100%);
+                        cursor: not-allowed;
+                        opacity: 0.6;
+                        transform: none;
+                        box-shadow: none;
+                    }
+                    .submit-btn:disabled:hover {
+                        background: linear-gradient(135deg, #cccccc 0%, #999999 100%);
+                        transform: none;
+                        box-shadow: none;
+                    }
                     .engine-buttons { 
                         display: flex; 
                         gap: 10px; 
@@ -567,8 +594,46 @@ def analyze_chess_move():
                         box-shadow: 0 4px 15px rgba(116, 77, 169, 0.15);
                         border: 1px solid #d4b3ff;
                     }
-                 .recommend-label { font-size: 1.2em; font-weight: bold; color: #4a2c7a; margin-bottom: 8px; }
-                 .recommend-value { font-size: 1.3em; color: #218838; margin-bottom: 18px; }
+                    .recommendations-wrapper {
+                        background: linear-gradient(135deg, #2c5530 0%, #1e3a22 100%);
+                        border: 3px solid #4a7c59;
+                        border-radius: 15px;
+                        padding: 25px;
+                        margin: 25px 0;
+                        box-shadow: 0 8px 25px rgba(44, 85, 48, 0.4);
+                    }
+                    .recommendations-header {
+                        color: #87ceeb !important;
+                        text-align: center;
+                        font-size: 1.5em;
+                        font-weight: bold;
+                        margin-bottom: 25px !important;
+                        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+                        border-bottom: 2px solid #87ceeb;
+                        padding-bottom: 10px;
+                    }
+                    .recommendation-section {
+                        background: rgba(255, 255, 255, 0.1);
+                        border: 2px solid rgba(135, 206, 235, 0.3);
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin-bottom: 20px;
+                    }
+                    .recommend-label {
+                        font-size: 1.3em;
+                        font-weight: bold;
+                        color: #87ceeb !important;
+                        margin-bottom: 12px !important;
+                        text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+                    }
+                    .recommend-value {
+                        font-size: 1.4em;
+                        color: #90EE90 !important;
+                        margin-bottom: 18px !important;
+                        font-weight: bold;
+                        text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+                        font-family: 'Courier New', monospace;
+                    }
                  .board-container {
                      display: flex;
                      justify-content: center;
@@ -637,10 +702,39 @@ def analyze_chess_move():
                 <script>
                     function loadSampleFEN(fen) {
                         document.getElementById('fen').value = fen;
+                        validateFENInput(); // Check if button should be enabled
                     }
+                    
                     function resetForm() {
                         window.location.href = '/';
                     }
+                    
+                    function validateFENInput() {
+                        const fenInput = document.getElementById('fen');
+                        const submitBtn = document.getElementById('submit-btn');
+                        
+                        if (fenInput.value.trim() === '') {
+                            submitBtn.disabled = true;
+                            submitBtn.title = 'Please enter a FEN position to analyze';
+                        } else {
+                            submitBtn.disabled = false;
+                            submitBtn.title = 'Click to analyze the chess position';
+                        }
+                    }
+                    
+                    // Initialize button state and add event listener when page loads
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const fenInput = document.getElementById('fen');
+                        validateFENInput(); // Check initial state
+                        
+                        // Add event listener for real-time validation
+                        fenInput.addEventListener('input', validateFENInput);
+                        fenInput.addEventListener('keyup', validateFENInput);
+                        fenInput.addEventListener('paste', function() {
+                            // Small delay to allow paste to complete
+                            setTimeout(validateFENInput, 10);
+                        });
+                    });
                 </script>
 
             </head>
@@ -653,11 +747,33 @@ def analyze_chess_move():
                 {% if msg %}<div class="msg">{{msg}}</div>{% endif %}
                 
                 <div class="main-form">
+                    <!-- Helpful Links Section -->
+                    <div style="margin-bottom: 20px; padding: 15px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; border: 1px solid #c299ff; text-align: center;">
+                        <div style="font-weight: bold; margin-bottom: 12px; color: #4a2c7a; font-size: 16px;">🔗 Helpful Resources</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+                            <a href="https://lichess.org/editor" target="_blank" style="text-decoration: none; padding: 8px 15px; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border-radius: 5px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);">
+                                ⚙️ Create FEN Position
+                            </a>
+                            <a href="https://www.chess.com" target="_blank" style="text-decoration: none; padding: 8px 15px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border-radius: 5px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);">
+                                🏆 Play on Chess.com
+                            </a>
+                            <a href="https://www.chess.com/analysis" target="_blank" style="text-decoration: none; padding: 8px 15px; background: linear-gradient(135deg, #6f42c1 0%, #563d7c 100%); color: white; border-radius: 5px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 5px rgba(111, 66, 193, 0.3);">
+                                📊 Chess.com Analysis
+                            </a>
+                            <a href="https://lichess.org/analysis" target="_blank" style="text-decoration: none; padding: 8px 15px; background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%); color: white; border-radius: 5px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 5px rgba(253, 126, 20, 0.3);">
+                                🔍 Lichess Analysis
+                            </a>
+                        </div>
+                        <div style="font-size: 11px; color: #6a5d7a; margin-top: 8px; font-style: italic;">
+                            💡 Tip: Use "Create FEN Position" to set up any chess position, then copy the FEN notation back here
+                        </div>
+                    </div>
+                    
                     <form action="/submit" method="post">
                         <div style="margin-bottom: 15px;">
                             <label for="fen" style="display: block; margin-bottom: 8px; font-weight: bold; font-size: 18px;">Enter FEN Position:</label>
                             <input type="text" name="fen" id="fen" class="fen-input{% if fen_result %} analyzed{% endif %}" placeholder="Enter FEN notation here..." value="{{current_fen}}">
-                            <div style="font-size: 11px; color: #7a6b93; margin-top: 5px; font-style: italic;">
+                            <div style="font-size: 11px; color: #6a5d7a; margin-top: 5px; font-style: italic;">
                                 FEN (Forsyth-Edwards Notation) describes a chess position: piece placement, turn, castling rights, en passant, and move counts
                             </div>
                         </div>
@@ -670,7 +786,7 @@ def analyze_chess_move():
                             <button type="button" class="sample-fen-btn" onclick="loadSampleFEN('r3k2r/ppp2ppp/2n1bn2/2bpp3/2P5/2N1PN2/PPBP1PPP/R1BQKR2 w Qkq - 0 8')">Tactical Position</button>
                         </div>
                         
-                        <button type="submit" class="submit-btn">Analyze Position</button>
+                        <button type="submit" id="submit-btn" class="submit-btn" disabled title="Please enter a FEN position to analyze">Analyze Position</button>
                         <button type="button" class="reset-btn" onclick="resetForm()">Reset</button>
                     </form>
                 </div>
@@ -680,7 +796,7 @@ def analyze_chess_move():
                     <h3 class="recommendations-header">Move Recommendations</h3>
                     
                     <div class="recommendation-section">
-                        <div class="recommend-label">Stockfish Recommendation</div>
+                        <div class="recommend-label">Stockfish Recommendation:</div>
                         <div class="recommend-value">{{fen_result['stockfish']}}</div>
                         {% if fen_result['stockfish_board'] %}
                         <div class="board-container">
@@ -690,16 +806,16 @@ def analyze_chess_move():
                     </div>
                     
                     <div class="recommendation-section">
-                        <div class="recommend-label">AI Recommendation (Built-in Chess Logic Engine)</div>
+                        <div class="recommend-label">AI Recommendation (Built-in Chess Logic Engine):</div>
                         <div class="recommend-value">{{fen_result['ai']}}</div>
-                        <div style="font-size: 11px; color: #7a6b93; margin-top: 5px; font-style: italic;">
-                            Generated using custom chess principles AI (evaluation-based move scoring)
-                        </div>
                         {% if fen_result['ai_board'] %}
                         <div class="board-container">
                             {{fen_result['ai_board']|safe}}
                         </div>
                         {% endif %}
+                        <div style="font-size: 12px; color: #b8e6b8; margin-top: 8px; font-style: italic; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
+                            Generated using custom chess principles AI (evaluation-based move scoring)
+                        </div>
                     </div>
                 </div>
                 {% endif %}
@@ -727,7 +843,7 @@ def analyze_chess_move():
                                     <button type="submit" class="engine-btn" {% if not stockfish_update_available %}style="opacity: 0.5;" disabled{% endif %}>Update Now</button>
                                 </form>
                                 <form action="/rollback_engine_now" method="post" style="display: inline;">
-                                    <button type="submit" class="engine-btn">Rollback</button>
+                                      <button type="submit" class="engine-btn" {% if not has_previous_engine() %}style="opacity: 0.5;" disabled{% endif %}>Rollback</button>
                                 </form>
                             </div>
                         {% else %}
@@ -760,8 +876,8 @@ def analyze_chess_move():
                                 <button type="submit" class="engine-btn" {% if not dep.update_available %}style="opacity: 0.5;" disabled{% endif %}>Update Now</button>
                             </form>
                             <form action="/rollback_package" method="post" style="display: inline;">
-                                <input type="hidden" name="package" value="{{ dep.name }}" />
-                                <button type="submit" class="engine-btn">Rollback</button>
+                                  <input type="hidden" name="package" value="{{ dep.name }}" />
+                                  <button type="submit" class="engine-btn" {% if not has_previous_package(dep.name) %}style="opacity: 0.5;" disabled{% endif %}>Rollback</button>
                             </form>
                         </div>
                     </div>
@@ -773,10 +889,10 @@ def analyze_chess_move():
                             GitHub: AprilLorDrake
                         </a>
                     </div>
-                </div>
-            </body>
-            </html>
-        ''', current=current, version=version, latest_tag=latest_tag, stockfish_update_available=stockfish_update_available, python_deps=python_deps, msg=msg, fen_result=fen_result, current_fen=current_fen)
+                  </div>
+              </body>
+              </html>
+        ''', current=current, version=version, latest_tag=latest_tag, stockfish_update_available=stockfish_update_available, python_deps=python_deps, msg=msg, fen_result=fen_result, current_fen=current_fen, has_previous_engine=has_previous_engine, has_previous_package=has_previous_package)
 
 @app.route('/submit', methods=['POST'])
 def submit():
