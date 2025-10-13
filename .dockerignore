@@ -1,0 +1,31 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+venv/
+env/
+.env
+
+# Development files
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+DEVELOPMENT_SUMMARY.md
+*.md
+
+# Windows specific
+*.exe
+*.bat
+*.ps1
+
+# Large files that should be downloaded in container
+stockfish_latest.zip

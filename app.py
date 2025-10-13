@@ -1145,3 +1145,8 @@ if __name__ == "__main__":
         app.run(host=host, port=port)
     except Exception as e:
         print(f"Flask failed to start: {e}")
+
+def main():
+    """Entry point for package installation"""
+    if __name__ == "__main__":
+        pass  # The Flask app will run from the code above
