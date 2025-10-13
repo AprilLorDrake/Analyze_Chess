@@ -1,26 +1,13 @@
 @echo off
-echo.
-echo ========================================
-echo    Starting Analyze Chess Application
-echo ========================================
-echo.
 cd /d "%~dp0"
-echo Current directory: %cd%
-echo.
-echo Activating virtual environment...
-call venv\Scripts\activate.bat
-echo  Virtual environment activated
-echo.
-echo Starting Flask server...
-echo  Server will start at http://127.0.0.1:5000
-echo.
-echo Opening browser in 3 seconds...
+
+REM Activate virtual environment and start Flask server in background
+start /min "" cmd /c "call venv\Scripts\activate.bat && python app.py"
+
+REM Wait a moment for server to start
 timeout /t 3 /nobreak >nul
+
+REM Open browser
 start http://127.0.0.1:5000
-echo  Browser launched
-echo.
-echo Starting Python application...
-python app.py
-echo.
-echo Application stopped. Press any key to exit...
-pause >nul
+
+REM Terminal closes automatically after this

@@ -452,6 +452,7 @@ def analyze_chess_move():
             <html>
             <head>
                 <title>Analyze Next Best Chess Move!</title>
+                <link rel="icon" type="image/x-icon" href="/favicon.ico">
                 <style>
                     body { 
                         font-family: Arial, sans-serif; 
@@ -968,6 +969,13 @@ def serve_assets(filename):
     from flask import send_from_directory
     assets_dir = os.path.join(os.path.dirname(__file__), 'assets')
     return send_from_directory(assets_dir, filename)
+
+@app.route('/favicon.ico')
+def favicon():
+    import os
+    from flask import send_from_directory
+    assets_dir = os.path.join(os.path.dirname(__file__), 'assets')
+    return send_from_directory(assets_dir, 'chess_icon.ico')
 
 # --- HEALTH CHECK (add near your other routes) ---
 @app.get("/__ac_health")
