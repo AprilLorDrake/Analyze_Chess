@@ -8,7 +8,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="analyze-chess",
-    version="1.1.1",
+    version="1.1.2",
     author="AprilLorDrake",
     author_email="your-email@example.com",
     description="A comprehensive chess position analysis tool using Stockfish engine",
