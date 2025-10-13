@@ -1,4 +1,5 @@
 @echo off
+pause
 REM ============================================
 REM      Analyze Chess - Smart Flask Launcher
 REM ============================================
@@ -64,9 +65,10 @@ IF %ERRORLEVEL%==0 (
     echo [%date% %time%] Port %PORT% is in use. Checking health... >> "%LOGFILE%"
 
     REM Call PowerShell to fetch health endpoint content
-    for /f "usebackq delims=" %%H in (`powershell -NoProfile -Command "try { $r = Invoke-WebRequest -UseBasicParsing '%HEALTH_URL%'; $r.Content.Trim() } catch { '' }"`) do (
-        set "HEALTH=%%H"
-    )
+    REM Use a temp file to avoid parenthesis issues in batch
+    powershell -NoProfile -Command "try { $r = Invoke-WebRequest -UseBasicParsing '%HEALTH_URL%'; $r.Content.Trim() } catch { '' }" > health_check.txt
+    set /p HEALTH=<health_check.txt
+    del /q health_check.txt 2>NUL
 
     if /I "%HEALTH%"=="%EXPECTED%" (
     echo [%date% %time%] Detected existing Analyze Chess on %PORT%. Opening browser & exiting. >> "%LOGFILE%"
