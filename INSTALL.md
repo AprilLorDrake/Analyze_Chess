@@ -36,6 +36,35 @@
 
 5. Open browser to: http://localhost:5000
 
+### Optional: Desktop Shortcut (Windows)
+
+Create a convenient desktop shortcut for one-click access:
+
+**Option A: PowerShell Command** (Recommended)
+```powershell
+$WshShell = New-Object -comObject WScript.Shell
+$Shortcut = $WshShell.CreateShortcut("$env:USERPROFILE\Desktop\Analyze Chess.lnk")
+$Shortcut.TargetPath = "C:\Projects\Analyze_Chess\launch_analyze_chess.bat"
+$Shortcut.IconLocation = "C:\Projects\Analyze_Chess\assets\chess_icon.ico"
+$Shortcut.WorkingDirectory = "C:\Projects\Analyze_Chess"
+$Shortcut.Save()
+Write-Host "Desktop shortcut created successfully!"
+```
+
+**Option B: Manual Creation**
+1. Right-click desktop → New → Shortcut
+2. Browse to: `C:\Projects\Analyze_Chess\launch_analyze_chess.bat`
+3. Name: "Analyze Chess"
+4. Right-click shortcut → Properties → Change Icon
+5. Browse to: `C:\Projects\Analyze_Chess\assets\chess_icon.ico`
+
+**Features of the desktop launcher:**
+- Automatic virtual environment activation
+- Professional startup sequence with progress indicators
+- Auto-opens browser to the chess analysis page
+- Proper error handling and user feedback
+- Custom chess piece icon
+
 ## Method 2: Python Package Installation (Coming Soon)
 
 Once published to GitHub Packages:

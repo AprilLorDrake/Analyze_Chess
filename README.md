@@ -62,6 +62,32 @@ Individual dependency management with version tracking and update controls for S
    ```
 5. Open your browser to `http://127.0.0.1:5000/analyze_chess_move`
 
+### Desktop Integration (Windows)
+
+For convenient desktop access, create a shortcut:
+
+1. **Automatic shortcut creation** (PowerShell):
+   ```powershell
+   $WshShell = New-Object -comObject WScript.Shell
+   $Shortcut = $WshShell.CreateShortcut("$env:USERPROFILE\Desktop\Analyze Chess.lnk")
+   $Shortcut.TargetPath = "C:\Projects\Analyze_Chess\launch_analyze_chess.bat"
+   $Shortcut.IconLocation = "C:\Projects\Analyze_Chess\assets\chess_icon.ico"
+   $Shortcut.WorkingDirectory = "C:\Projects\Analyze_Chess"
+   $Shortcut.Save()
+   ```
+
+2. **Manual shortcut creation**:
+   - Right-click on desktop → New → Shortcut
+   - Target: Path to `launch_analyze_chess.bat`
+   - Name: "Analyze Chess"
+   - Change icon to `assets\chess_icon.ico`
+
+The desktop shortcut will:
+- Activate the Python virtual environment
+- Start the Flask application
+- Automatically open your default browser
+- Display a professional startup sequence
+
 ## Usage
 
 1. Enter a chess position in FEN notation
