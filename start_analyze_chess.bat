@@ -1,21 +1,20 @@
 @echo off
-pause
 REM ============================================
 REM      Analyze Chess - Smart Flask Launcher
 REM ============================================
-cd /d C:\Projects\pyscripts
+cd /d "%~dp0"
 
-set LOGFILE=C:\Projects\pyscripts\launch_log.txt
+set LOGFILE=%~dp0launch_log.txt
 echo. > "%LOGFILE%"
 echo [%date% %time%] Starting Analyze Chess >> "%LOGFILE%"
 echo -------------------------------------------- >> "%LOGFILE%"
 
 REM --- Ensure venv exists & activate ---
-IF NOT EXIST ".venv\Scripts\activate" (
+IF NOT EXIST "venv\Scripts\activate.bat" (
     echo [%date% %time%] [!] venv missing, creating... >> "%LOGFILE%"
-    python -m venv .venv >> "%LOGFILE%" 2>&1
+    python -m venv venv >> "%LOGFILE%" 2>&1
 )
-call .venv\Scripts\activate >> "%LOGFILE%" 2>&1
+call venv\Scripts\activate.bat >> "%LOGFILE%" 2>&1
 
 REM --- Pip & deps (install only when requirements change or UPDATE_DEPS=1) ---
 set "REQ_FILE=requirements.txt"
@@ -107,7 +106,7 @@ REM --- Launch app ---
 start "" http://127.0.0.1:%PORT%/analyze_chess_move
 echo [%date% %time%] [*] Launching app (python app.py) on %PORT%... >> "%LOGFILE%"
 set PORT=%PORT%
-"C:\Projects\pyscripts\.venv\Scripts\python.exe" "C:\Projects\pyscripts\app.py" >> "%LOGFILE%" 2>&1
+"%~dp0venv\Scripts\python.exe" "%~dp0app.py" >> "%LOGFILE%" 2>&1
 
 IF %ERRORLEVEL% NEQ 0 (
     echo [%date% %time%] [!] Flask exited with code %ERRORLEVEL% >> "%LOGFILE%"

@@ -1,2 +1,98 @@
-Stockfish chess fen analysis on best next best move using FEN.  Runs on 127.0.0.1:5000 as Flask app with field for FEN entry. Must start Flask with "Flask Run" command.
+# Chess Analysis Web Application
+
+A comprehensive chess analysis tool powered by Stockfish engine with built-in AI recommendations and dependency management.
+
+## Features
+
+- **FEN Position Analysis**: Enter any chess position in FEN notation for analysis
+- **Stockfish Engine Integration**: Professional-grade chess engine analysis
+- **AI Move Recommendations**: Built-in custom chess logic AI for alternative move suggestions
+- **Visual Chess Boards**: Interactive HTML chess board visualization
+- **Component Management**: Individual dependency tracking and update management
+- **Modern UI**: Purple-themed responsive web interface
+
+## What is FEN?
+
+**FEN (Forsyth-Edwards Notation)** is a standard notation for describing a particular board position in chess. It provides a compact way to represent:
+
+- **Piece placement** on the board (rank by rank)
+- **Active color** (whose turn it is)
+- **Castling availability** for both sides
+- **En passant target square** (if applicable)
+- **Halfmove clock** (moves since last capture or pawn move)
+- **Fullmove number** (increments after Black's move)
+
+**Example FEN**: `rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1`
+
+This represents the position after White plays 1.e4 in the opening, with Black to move next.
+
+## Screenshots
+
+### Main Analysis Interface
+![Chess Analysis Interface](assets/Example%20UI%20Results%201.png)
+
+The main interface shows FEN input, Stockfish recommendations, AI suggestions, and visual chess boards.
+
+### Component Management System
+![Component Management](assets/Example%20UI%20Results%202%20(Component%20Management).png)
+
+Individual dependency management with version tracking and update controls for Stockfish engine and Python packages.
+
+## Getting Started
+
+### Prerequisites
+- Python 3.7+
+- Virtual environment (recommended)
+
+### Installation
+
+1. Clone the repository
+2. Set up virtual environment:
+   ```bash
+   python -m venv venv
+   venv\Scripts\activate  # Windows
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r assets/requirements.txt
+   ```
+4. Run the application:
+   ```bash
+   python app.py
+   ```
+5. Open your browser to `http://127.0.0.1:5000/analyze_chess_move`
+
+## Usage
+
+1. Enter a chess position in FEN notation
+2. Click "Analyze Position" to get recommendations
+3. View Stockfish engine analysis and AI suggestions
+4. See visual chess boards showing recommended moves
+5. Manage engine and dependencies in the About section
+
+## Technical Details
+
+- **Backend**: Flask web framework
+- **Chess Engine**: Stockfish 17.1 (professional chess analysis)
+- **AI Engine**: Custom chess principles evaluation with:
+  - Piece capture analysis (material values)
+  - Check and checkmate detection
+  - Center square control evaluation
+  - Basic safety assessment
+- **Frontend**: HTML/CSS with purple gradient theme
+- **Dependencies**: Flask, python-chess, requests
+- **Dependency Management**: Real-time version checking with PyPI integration
+
+## AI Analysis Features
+
+The built-in AI recommendation system provides alternative move suggestions using:
+- **Material evaluation**: Prioritizes captures based on piece values
+- **Tactical awareness**: Favors checks and checkmate opportunities  
+- **Positional understanding**: Encourages center control
+- **Safety assessment**: Avoids placing pieces in danger
+
+This complements Stockfish analysis by offering a different analytical perspective.
+
+---
+© 2025 Drake Svc LLC. All rights reserved.
 
