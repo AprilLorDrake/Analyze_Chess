@@ -786,13 +786,15 @@ def analyze_chess_move():
                     function validateFENInput() {
                         const fenInput = document.getElementById('fen');
                         const submitBtn = document.getElementById('submit-btn');
-                        
+                        const resetBtn = document.getElementById('reset-btn');
                         if (fenInput.value.trim() === '') {
                             submitBtn.disabled = true;
-                            submitBtn.title = 'Please enter a FEN position to analyze';
+                            submitBtn.style.display = 'none';
+                            resetBtn.style.display = 'block';
                         } else {
                             submitBtn.disabled = false;
-                            submitBtn.title = 'Click to analyze the chess position';
+                            submitBtn.style.display = 'block';
+                            resetBtn.style.display = 'none';
                         }
                     }
                     
@@ -809,6 +811,57 @@ def analyze_chess_move():
                         resetBtn.classList.add('active');
                     }
                     
+                    // Update board_to_html to accept a flip argument
+                    function board_to_html(board, highlight_move, flip) {
+                        // ...existing code...
+                        // Use flip to determine rank and file order
+                        for (let rank = 7; rank >= 0; rank--) {  // 8 to 1
+                            let rank_display = flip ? (7 - rank) : rank;
+                            html.push('<div class="board-row">');
+                            html.push(`<div class="rank-label">${rank_display + 1}</div>`);
+                            
+                            for (let file = 0; file < 8; file++) {  // a to h
+                                let square = chess.square(file, rank);
+                                let piece = board.piece_at(square);
+                                
+                                // Determine square color
+                                let square_color = (file + rank) % 2 === 0 ? 'light' : 'dark';
+                                
+                                // Check if this square should be highlighted
+                                let highlight_class = '';
+                                if (highlight_move) {
+                                    if (square === highlight_move.from_square) {
+                                        highlight_class = ' from-square';
+                                    } else if (square === highlight_move.to_square) {
+                                        highlight_class = ' to-square';
+                                    }
+                                }
+                                
+                                let piece_symbol = piece_unicode.get(piece.symbol(), '') if piece else '';
+                                let piece_color = piece && piece.color ? 'white' : 'black';
+                                
+                                html.push(`<div class="chess-square ${square_color}${highlight_class}">`);
+                                if (piece_symbol) {
+                                    html.push(`<span class="chess-piece ${piece_color}">${piece_symbol}</span>`);
+                                }
+                                html.push('</div>');
+                            }
+                            
+                            html.push('</div>');
+                        }
+                        
+                        // Add file labels at bottom
+                        html.push('<div class="board-row file-labels">');
+                        html.push('<div class="rank-label"></div>');  // Empty corner
+                        for (let file_char of 'abcdefgh') {
+                            html.push(`<div class="file-label">${file_char}</div>`);
+                        }
+                        html.push('</div>');
+                        
+                        html.push('</div>');
+                        return html.join('');
+                    }
+
                     // Initialize button state and add event listener when page loads
                     document.addEventListener('DOMContentLoaded', function() {
                         const fenInput = document.getElementById('fen');
@@ -886,8 +939,10 @@ def analyze_chess_move():
                             <button type="button" class="sample-fen-btn" onclick="loadSampleFEN('r3k2r/ppp2ppp/2n1bn2/2bpp3/2P5/2N1PN2/PPBP1PPP/R1BQKR2 w Qkq - 0 8')">Tactical Position</button>
                         </div>
                         
-                        <button type="submit" id="submit-btn" class="submit-btn" disabled title="Please enter a FEN position to analyze">Analyze Position</button>
-                        <button type="button" class="reset-btn" onclick="resetForm()">Reset</button>
+                        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 30px;">
+                            <button type="button" class="reset-btn" id="reset-btn" onclick="resetForm()" style="display: none; min-width: 180px; font-size: 1.2em;">Reset</button>
+                            <button type="submit" id="submit-btn" class="submit-btn" disabled title="Please enter a FEN position to analyze" style="display: none; min-width: 180px; font-size: 1.2em;">Analyze Position</button>
+                        </div>
                     </form>
                 </div>
 
