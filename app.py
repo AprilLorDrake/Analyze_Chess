@@ -775,14 +775,10 @@ def analyze_chess_move():
                 </style>
                 <script>
                     function loadSampleFEN(fen) {
-                        document.getElementById('fen').value = fen;
-                        validateFENInput();
-                        // Automatically show Analyze button and hide Reset
-                        const submitBtn = document.getElementById('submit-btn');
-                        const resetBtn = document.getElementById('reset-btn');
-                        submitBtn.disabled = false;
-                        submitBtn.style.display = 'block';
-                        resetBtn.style.display = 'none';
+                        var fenInput = document.getElementById('fen');
+                        fenInput.value = fen;
+                        fenInput.dispatchEvent(new Event('input'));
+                        fenInput.focus();
                     }
                     
                     function resetForm() {
@@ -931,7 +927,7 @@ def analyze_chess_move():
                     <form action="/submit" method="post">
                         <div style="margin-bottom: 15px;">
                             <label for="fen" style="display: block; margin-bottom: 8px; font-weight: bold; font-size: 18px;">Enter FEN Position:</label>
-                            <input type="text" name="fen" id="fen" class="fen-input{% if fen_result %} analyzed{% endif %}" placeholder="Enter FEN notation here..." value="{{current_fen}}">
+                            <input type="text" name="fen" id="fen" class="fen-input{% if fen_result %} analyzed{% endif %}" placeholder="Enter FEN notation here..." value="{{current_fen}}" autocomplete="off">
                             <div style="font-size: 11px; color: #6a5d7a; margin-top: 5px; font-style: italic;">
                                 FEN (Forsyth-Edwards Notation) describes a chess position: piece placement, turn, castling rights, en passant, and move counts
                             </div>
