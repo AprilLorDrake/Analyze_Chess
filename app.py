@@ -834,6 +834,14 @@ def analyze_chess_move():
                 <div class="header">
                     <img src="/assets/chess_icon.png" alt="Chess Icon" style="height:64px;vertical-align:middle;margin-right:12px;">
                     <span style="font-size:2em;font-weight:bold;vertical-align:middle;">Analyze Next Best Chess Move!</span>
+                    <div style="margin-top: 10px; font-size: 14px; color: #6a5d7a;">
+                        Version {{ app_version_info.current }}
+                        {% if app_version_info.update_available %}
+                        <span style="margin-left: 10px; padding: 4px 8px; background: #ff9800; color: white; border-radius: 12px; font-size: 11px; font-weight: bold;">
+                            📋 Update Available: {{ app_version_info.latest }}
+                        </span>
+                        {% endif %}
+                    </div>
                 </div>
                 
                 {% if msg %}<div class="msg">{{msg}}</div>{% endif %}
@@ -917,9 +925,15 @@ def analyze_chess_move():
                     <h4 style="color: #4a2c7a; margin-bottom: 20px; text-align: center; border-bottom: 2px solid #8e44ad; padding-bottom: 10px;">Component Management</h4>
                     
                     <!-- Application Version Section -->
-                    <div style="margin-bottom: 25px; padding: 15px; background-color: rgba(142, 68, 173, 0.05); border: 1px solid #d4b3ff; border-radius: 8px;">
+                    <div style="margin-bottom: 25px; padding: 15px; background-color: {% if app_version_info.update_available %}rgba(255, 152, 0, 0.1){% else %}rgba(142, 68, 173, 0.05){% endif %}; border: 1px solid {% if app_version_info.update_available %}#ff9800{% else %}#d4b3ff{% endif %}; border-radius: 8px;">
                         <h4 style="color: #4a2c7a; margin-bottom: 15px; display: flex; align-items: center;">
-                            <span style="font-size: 20px; margin-right: 10px;">🚀</span>Chess Analysis Application
+                            <span style="font-size: 20px; margin-right: 10px;">🚀</span>Chess Analysis Application 
+                            <span style="margin-left: 10px; font-size: 12px; color: #666; font-weight: normal;">← This App</span>
+                            {% if app_version_info.update_available %}
+                            <span style="margin-left: auto; padding: 4px 8px; background: #ff9800; color: white; border-radius: 12px; font-size: 11px; font-weight: bold;">
+                                📋 UPDATE AVAILABLE
+                            </span>
+                            {% endif %}
                         </h4>
                         <div style="margin-bottom: 10px;"><strong>Current Version:</strong> {{ app_version_info.current }}</div>
                         <div style="margin-bottom: 10px;"><strong>Latest Available:</strong> {{ app_version_info.latest }}</div>
