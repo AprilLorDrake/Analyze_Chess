@@ -965,10 +965,14 @@ def analyze_chess_move():
                             </div>
                             <div class="engine-buttons">
                                 <form action="/update_engine_now" method="post" style="display: inline;">
-                                    <button type="submit" class="engine-btn" {% if not stockfish_update_available %}style="opacity: 0.5;" disabled{% endif %}>Update Now</button>
+                                    {% if stockfish_update_available %}
+                                    <button type="submit" class="engine-btn">Update Now</button>
+                                    {% endif %}
                                 </form>
                                 <form action="/rollback_engine_now" method="post" style="display: inline;">
-                                      <button type="submit" class="engine-btn" {% if not has_previous_engine() %}style="opacity: 0.5;" disabled{% endif %}>Rollback</button>
+                                      {% if has_previous_engine() %}
+                                      <button type="submit" class="engine-btn">Rollback</button>
+                                      {% endif %}
                                 </form>
                             </div>
                         {% else %}
@@ -998,11 +1002,15 @@ def analyze_chess_move():
                             <form action="/update_package" method="post" style="display: inline;">
                                 <input type="hidden" name="package" value="{{ dep.name }}" />
                                 <input type="hidden" name="version" value="{{ dep.latest_version }}" />
-                                <button type="submit" class="engine-btn" {% if not dep.update_available %}style="opacity: 0.5;" disabled{% endif %}>Update Now</button>
+                                {% if dep.update_available %}
+                                <button type="submit" class="engine-btn">Update Now</button>
+                                {% endif %}
                             </form>
                             <form action="/rollback_package" method="post" style="display: inline;">
                                   <input type="hidden" name="package" value="{{ dep.name }}" />
-                                  <button type="submit" class="engine-btn" {% if not has_previous_package(dep.name) %}style="opacity: 0.5;" disabled{% endif %}>Rollback</button>
+                                  {% if has_previous_package(dep.name) %}
+                                  <button type="submit" class="engine-btn">Rollback</button>
+                                  {% endif %}
                             </form>
                         </div>
                     </div>
