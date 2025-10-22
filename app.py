@@ -777,8 +777,11 @@ def analyze_chess_move():
                     function loadSampleFEN(fen) {
                         var fenInput = document.getElementById('fen');
                         fenInput.value = fen;
-                        fenInput.dispatchEvent(new Event('input'));
+                        fenInput.removeAttribute('readonly');
+                        fenInput.removeAttribute('disabled');
+                        fenInput.dispatchEvent(new Event('input', { bubbles: true }));
                         fenInput.focus();
+                        setTimeout(validateFENInput, 10);
                     }
                     
                     function resetForm() {
