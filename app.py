@@ -776,7 +776,13 @@ def analyze_chess_move():
                 <script>
                     function loadSampleFEN(fen) {
                         document.getElementById('fen').value = fen;
-                        validateFENInput(); // Check if button should be enabled
+                        validateFENInput();
+                        // Automatically show Analyze button and hide Reset
+                        const submitBtn = document.getElementById('submit-btn');
+                        const resetBtn = document.getElementById('reset-btn');
+                        submitBtn.disabled = false;
+                        submitBtn.style.display = 'block';
+                        resetBtn.style.display = 'none';
                     }
                     
                     function resetForm() {
