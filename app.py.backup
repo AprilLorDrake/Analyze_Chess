@@ -224,16 +224,30 @@ def get_application_version_info():
     except ImportError:
         requests_available = False
     
-    # Current version - we'll read this from a version file or git tag
-    current_version = "v1.2.0"  # This should be updated with each release
+    # Current version - try to get from git, fallback to default
+    current_version = "v1.2.1"  # Fallback version if git fails
     
-    # Try to get current version from git tag if possible
+    # Try to get current version from git tag
     try:
         import subprocess
+        # First try exact tag match
         result = subprocess.run(['git', 'describe', '--tags', '--exact-match'], 
                               capture_output=True, text=True, cwd=os.path.dirname(__file__))
         if result.returncode == 0:
             current_version = result.stdout.strip()
+        else:
+            # If not on exact tag, get the base version from describe
+            result = subprocess.run(['git', 'describe', '--tags'], 
+                                  capture_output=True, text=True, cwd=os.path.dirname(__file__))
+            if result.returncode == 0:
+                # Parse "v1.2.1-2-g9fa98d5" to get "v1.2.1-dev"
+                git_desc = result.stdout.strip()
+                if '-' in git_desc:
+                    # We're ahead of the tag, so this is a dev version
+                    base_version = git_desc.split('-')[0]
+                    current_version = f"{base_version}-dev"
+                else:
+                    current_version = git_desc
     except:
         pass  # Fall back to hardcoded version
     
@@ -877,7 +891,8 @@ def analyze_chess_move():
                                 FEN (Forsyth-Edwards Notation) describes a chess position: piece placement, turn, castling rights, en passant, and move counts
                             </div>
                         </div>
-                                                <div class="sample-fens">
+                        {% if not fen_result %}
+                        <div class="sample-fens">
                             <div style="font-weight: bold; margin-bottom: 8px; color: #4a2c7a;">Sample Positions:</div>
                             <button type="button" class="sample-fen-btn" onclick="loadSampleFEN('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')">Starting Position</button>
                             <button type="button" class="sample-fen-btn" onclick="loadSampleFEN('r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 4 4')">Scholar's Mate Setup</button>
@@ -885,9 +900,12 @@ def analyze_chess_move():
                             <button type="button" class="sample-fen-btn" onclick="loadSampleFEN('6k1/5ppp/8/8/8/2K5/5PPP/8 w - - 0 1')">Endgame Position</button>
                             <button type="button" class="sample-fen-btn" onclick="loadSampleFEN('r3k2r/ppp2ppp/2n1bn2/2bpp3/2P5/2N1PN2/PPBP1PPP/R1BQKR2 w Qkq - 0 8')">Tactical Position</button>
                         </div>
+                        {% endif %}
                         
-                        <button type="submit" id="submit-btn" class="submit-btn" disabled title="Please enter a FEN position to analyze">Analyze Position</button>
+                        <button type="submit" id="submit-btn" class="submit-btn"{% if not fen_result %} disabled title="Please enter a FEN position to analyze"{% else %} title="Analyze a different position"{% endif %}>{% if fen_result %}Analyze New Position{% else %}Analyze Position{% endif %}</button>
+                        {% if fen_result %}
                         <button type="button" class="reset-btn" onclick="resetForm()">Reset</button>
+                        {% endif %}
                     </form>
                 </div>
 
@@ -944,7 +962,7 @@ def analyze_chess_move():
                         </div>
                         {% if app_version_info.update_available and app_version_info.release_url %}
                         <div class="engine-buttons">
-                            <a href="{{ app_version_info.release_url }}" target="_blank" class="engine-btn" style="text-decoration: none; display: inline-block; color: white;">View Update</a>
+                            <a href="{{ app_version_info.release_url }}" target="_blank" class="engine-btn" style="text-decoration: none; display: inline-block; color: white;">📔 Release Notes</a>
                         </div>
                         {% endif %}
                     </div>
