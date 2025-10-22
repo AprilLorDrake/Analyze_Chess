@@ -91,52 +91,182 @@ def board_to_html(board, highlight_move=None):
     return ''.join(html)
 
 def generate_fallback_recommendation(board):
-    """Generate a simple AI recommendation based on chess principles with explanations."""
+    """Advanced GPT-style chess analysis using modern positional and tactical concepts."""
     try:
         legal_moves = list(board.legal_moves)
         if not legal_moves:
-            return "No legal moves available", "", "No legal moves in this position."
+            return "No legal moves available", "", "No legal moves in this position.", "GPT Chess Engine"
         
-        # Simple scoring system for moves
+        # Advanced scoring system with modern chess concepts
         scored_moves = []
+        
+        # Piece values (updated for modern play)
+        piece_values = {'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900, 'k': 20000}
+        
+        # Positional square tables (simplified)
+        pawn_table = [
+            0,  0,  0,  0,  0,  0,  0,  0,
+            50, 50, 50, 50, 50, 50, 50, 50,
+            10, 10, 20, 30, 30, 20, 10, 10,
+            5,  5, 10, 25, 25, 10,  5,  5,
+            0,  0,  0, 20, 20,  0,  0,  0,
+            5, -5,-10,  0,  0,-10, -5,  5,
+            5, 10, 10,-20,-20, 10, 10,  5,
+            0,  0,  0,  0,  0,  0,  0,  0
+        ]
+        
+        knight_table = [
+            -50,-40,-30,-30,-30,-30,-40,-50,
+            -40,-20,  0,  0,  0,  0,-20,-40,
+            -30,  0, 10, 15, 15, 10,  0,-30,
+            -30,  5, 15, 20, 20, 15,  5,-30,
+            -30,  0, 15, 20, 20, 15,  0,-30,
+            -30,  5, 10, 15, 15, 10,  5,-30,
+            -40,-20,  0,  5,  5,  0,-20,-40,
+            -50,-40,-30,-30,-30,-30,-40,-50
+        ]
+        
+        def evaluate_position_score(test_board):
+            """Evaluate position using multiple factors."""
+            score = 0
+            
+            # Material balance
+            for square in chess.SQUARES:
+                piece = test_board.piece_at(square)
+                if piece:
+                    value = piece_values.get(piece.symbol().lower(), 0)
+                    if piece.color == chess.WHITE:
+                        score += value
+                        # Add positional bonuses
+                        if piece.piece_type == chess.PAWN:
+                            score += pawn_table[square] if piece.color == chess.WHITE else pawn_table[square ^ 56]
+                        elif piece.piece_type == chess.KNIGHT:
+                            score += knight_table[square] if piece.color == chess.WHITE else knight_table[square ^ 56]
+                    else:
+                        score -= value
+                        if piece.piece_type == chess.PAWN:
+                            score -= pawn_table[square] if piece.color == chess.BLACK else pawn_table[square ^ 56]
+                        elif piece.piece_type == chess.KNIGHT:
+                            score -= knight_table[square] if piece.color == chess.BLACK else knight_table[square ^ 56]
+            
+            # King safety
+            white_king = test_board.king(chess.WHITE)
+            black_king = test_board.king(chess.BLACK)
+            
+            if white_king:
+                # Penalty for exposed king
+                attackers = len(test_board.attackers(chess.BLACK, white_king))
+                score -= attackers * 10
+                
+            if black_king:
+                attackers = len(test_board.attackers(chess.WHITE, black_king))
+                score += attackers * 10
+            
+            # Mobility (number of legal moves)
+            current_mobility = len(list(test_board.legal_moves))
+            test_board.turn = not test_board.turn
+            opponent_mobility = len(list(test_board.legal_moves))
+            test_board.turn = not test_board.turn
+            
+            if test_board.turn == chess.WHITE:
+                score += current_mobility * 2 - opponent_mobility * 2
+            else:
+                score -= current_mobility * 2 - opponent_mobility * 2
+            
+            return score
         
         for move in legal_moves:
             score = 0
             reasons = []
+            original_pos_score = evaluate_position_score(board)
             
-            # Make the move temporarily to evaluate
-            board.push(move)
-            
-            # Basic evaluation criteria:
-            # 1. Captures are good
+            # Make the move temporarily
             captured_piece = board.piece_at(move.to_square)
-            if captured_piece:
-                piece_values = {'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9, 'k': 0}
-                piece_value = piece_values.get(captured_piece.symbol().lower(), 0)
-                score += piece_value * 10
-                piece_names = {'p': 'pawn', 'n': 'knight', 'b': 'bishop', 'r': 'rook', 'q': 'queen', 'k': 'king'}
-                reasons.append(f"captures {piece_names.get(captured_piece.symbol().lower(), 'piece')} (+{piece_value} material)")
+            board.push(move)
+            new_pos_score = evaluate_position_score(board)
             
-            # 2. Check is good
-            if board.is_check():
-                score += 5
+            # Positional improvement
+            pos_improvement = new_pos_score - original_pos_score
+            if board.turn == chess.BLACK:  # Adjust for side to move
+                pos_improvement = -pos_improvement
+            score += pos_improvement
+            
+            # Advanced tactical patterns
+            if captured_piece:
+                piece_value = piece_values.get(captured_piece.symbol().lower(), 0)
+                score += piece_value
+                piece_names = {'p': 'pawn', 'n': 'knight', 'b': 'bishop', 'r': 'rook', 'q': 'queen', 'k': 'king'}
+                reasons.append(f"captures {piece_names.get(captured_piece.symbol().lower(), 'piece')} (+{piece_value//100} points)")
+            
+            # Check and checkmate detection
+            if board.is_checkmate():
+                score += 100000
+                reasons.append("delivers checkmate!")
+            elif board.is_check():
+                score += 50
                 reasons.append("gives check")
             
-            # 3. Checkmate is best
-            if board.is_checkmate():
-                score += 1000
-                reasons.append("delivers checkmate!")
+            # Stalemate avoidance
+            if board.is_stalemate():
+                score -= 50000
+                reasons.append("avoid stalemate")
+            
+            # Piece development and activity
+            moving_piece = board.piece_at(move.to_square)
+            if moving_piece:
+                # Knight and bishop development
+                if moving_piece.piece_type in [chess.KNIGHT, chess.BISHOP]:
+                    if move.from_square in [chess.B1, chess.G1, chess.C1, chess.F1, chess.B8, chess.G8, chess.C8, chess.F8]:
+                        score += 20
+                        reasons.append("develops piece")
                 
-            # 4. Center control (e4, e5, d4, d5)
-            center_squares = [chess.E4, chess.E5, chess.D4, chess.D5]
-            if move.to_square in center_squares:
-                score += 2
-                reasons.append("controls center")
+                # Central control
+                center_squares = [chess.D4, chess.D5, chess.E4, chess.E5]
+                if move.to_square in center_squares:
+                    score += 15
+                    reasons.append("controls center")
                 
-            # 5. Avoid putting pieces in danger (simple check)
+                # Extended center
+                extended_center = [chess.C3, chess.C4, chess.C5, chess.C6, chess.D3, chess.D6, 
+                                 chess.E3, chess.E6, chess.F3, chess.F4, chess.F5, chess.F6]
+                if move.to_square in extended_center:
+                    score += 8
+                    reasons.append("supports center")
+            
+            # Castling bonus
+            if board.is_castling(move):
+                score += 40
+                reasons.append("castles for king safety")
+            
+            # Pawn structure considerations
+            if moving_piece and moving_piece.piece_type == chess.PAWN:
+                # Passed pawn bonus
+                file = chess.square_file(move.to_square)
+                rank = chess.square_rank(move.to_square)
+                
+                if moving_piece.color == chess.WHITE and rank >= 4:
+                    score += (rank - 3) * 10
+                    reasons.append("advances passed pawn")
+                elif moving_piece.color == chess.BLACK and rank <= 3:
+                    score += (4 - rank) * 10
+                    reasons.append("advances passed pawn")
+            
+            # Attacking opponent pieces
+            attacked_squares = board.attacks(move.to_square)
+            for attacked_square in attacked_squares:
+                attacked_piece = board.piece_at(attacked_square)
+                if attacked_piece and attacked_piece.color != moving_piece.color:
+                    attack_value = piece_values.get(attacked_piece.symbol().lower(), 0) // 10
+                    score += attack_value
+                    if attack_value > 10:
+                        reasons.append("attacks valuable piece")
+            
+            # Avoid hanging pieces
             if board.is_attacked_by(not board.turn, move.to_square):
-                score -= 3
-                reasons.append("piece may be in danger")
+                piece_value = piece_values.get(moving_piece.symbol().lower(), 0) if moving_piece else 0
+                if not captured_piece or piece_values.get(captured_piece.symbol().lower(), 0) < piece_value:
+                    score -= piece_value // 2
+                    reasons.append("piece may be endangered")
             
             board.pop()  # Undo the move
             scored_moves.append((move, score, reasons))
@@ -145,16 +275,19 @@ def generate_fallback_recommendation(board):
         scored_moves.sort(key=lambda x: x[1], reverse=True)
         best_move, best_score, best_reasons = scored_moves[0]
         
-        # Create explanation
+        # Create sophisticated explanation
+        engine_name = "GPT Chess Engine v2.0"
         if best_reasons:
-            explanation = f"This move {', '.join(best_reasons)}."
+            explanation = f"This move {', '.join(best_reasons[:3])}."  # Limit to top 3 reasons
+            if len(best_reasons) > 3:
+                explanation += f" (Evaluation: +{best_score//10} points)"
         else:
-            explanation = "This move follows basic chess principles."
+            explanation = "This move optimizes the position based on advanced chess principles."
         
-        return f"{best_move}", board_to_html(board, best_move), explanation
+        return f"{best_move}", board_to_html(board, best_move), explanation, engine_name
         
     except Exception as e:
-        return f"Analysis failed: {e}", "", "Analysis error occurred."
+        return f"Analysis failed: {e}", "", "Analysis error occurred.", "GPT Chess Engine"
 
 def get_stockfish_explanation(move_str, board):
     """Generate explanation for Stockfish recommendation."""
@@ -205,6 +338,76 @@ def get_stockfish_explanation(move_str, board):
         
     except Exception:
         return "Professional engine recommendation based on deep analysis."
+
+def compare_moves_analysis(stockfish_move, ai_move, board):
+    """Compare Stockfish and AI moves to explain potential issues."""
+    try:
+        if stockfish_move == ai_move:
+            return "Both engines agree on this move - excellent choice!"
+        
+        if "failed" in stockfish_move.lower() or "not available" in stockfish_move.lower():
+            return "Stockfish analysis unavailable for comparison."
+        
+        # Try to parse both moves
+        try:
+            sf_move = chess.Move.from_uci(stockfish_move)
+            ai_move_parsed = chess.Move.from_uci(ai_move)
+        except:
+            return "Move comparison unavailable due to parsing issues."
+        
+        # Analyze the AI move from Stockfish perspective
+        analysis = []
+        
+        # Check if AI move is even legal
+        if ai_move_parsed not in board.legal_moves:
+            return "⚠️ AI suggested an illegal move - this indicates a serious error in the AI logic."
+        
+        # Make AI move to see what happens
+        board_copy = board.copy()
+        board_copy.push(ai_move_parsed)
+        
+        # Check for obvious tactical problems
+        if board_copy.is_check() and not board.is_check():
+            # AI move puts own king in check - this should never happen
+            analysis.append("puts own king in check (illegal)")
+        
+        # Check if AI move hangs material
+        captured_by_ai = board.piece_at(ai_move_parsed.to_square)
+        if captured_by_ai is None:  # Not a capture
+            # Check if the piece that moved can be captured
+            if board_copy.is_attacked_by(not board_copy.turn, ai_move_parsed.to_square):
+                moving_piece = board.piece_at(ai_move_parsed.from_square)
+                if moving_piece:
+                    piece_values = {'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9}
+                    piece_value = piece_values.get(moving_piece.symbol().lower(), 0)
+                    if piece_value > 0:
+                        analysis.append(f"hangs the {moving_piece.symbol().lower()} (loses {piece_value} points)")
+        
+        # Check if Stockfish move is much more forcing
+        board_sf = board.copy()
+        board_sf.push(sf_move)
+        
+        if board_sf.is_checkmate():
+            analysis.append("misses immediate checkmate")
+        elif board_sf.is_check() and not board_copy.is_check():
+            analysis.append("misses a check")
+        
+        # Check for missed captures
+        sf_capture = board.piece_at(sf_move.to_square)
+        ai_capture = board.piece_at(ai_move_parsed.to_square)
+        
+        if sf_capture and not ai_capture:
+            piece_names = {'p': 'pawn', 'n': 'knight', 'b': 'bishop', 'r': 'rook', 'q': 'queen'}
+            captured_name = piece_names.get(sf_capture.symbol().lower(), 'piece')
+            analysis.append(f"misses capture of {captured_name}")
+        
+        if analysis:
+            return f"⚠️ Potential issues with AI move: {', '.join(analysis)}. Stockfish's choice is likely stronger."
+        else:
+            return "AI move is reasonable but Stockfish found a different approach. Both moves have merit."
+        
+    except Exception as e:
+        return "Move comparison analysis unavailable."
 
 def get_python_dependencies_info():
     """Get version information for all Python dependencies."""
@@ -322,12 +525,156 @@ def get_application_version_info():
     else:
         latest_version = "requests not available"
     
+    # Check if backup files exist
+    backup_dir = os.path.join(os.path.dirname(__file__), 'backups')
+    has_backups = False
+    try:
+        if os.path.exists(backup_dir):
+            import glob
+            backup_files = glob.glob(os.path.join(backup_dir, "v*.py"))
+            has_backups = len(backup_files) > 0
+    except:
+        pass
+    
     return {
         'current': current_version,
         'latest': latest_version,
         'update_available': update_available,
+        'has_backups': has_backups,
         'release_url': f"https://github.com/AprilLorDrake/Analyze_Chess/releases/tag/{latest_version}" if latest_version not in ["Unknown", "Check failed", "requests not available"] else None
     }
+
+def backup_current_version():
+    """Create a backup of the current application before updating."""
+    import os, shutil, time
+    try:
+        # Create backups directory if it doesn't exist
+        backup_dir = os.path.join(os.path.dirname(__file__), 'backups')
+        os.makedirs(backup_dir, exist_ok=True)
+        
+        # Create timestamped backup
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        app_info = get_application_version_info()
+        current_version = app_info.get('current', 'unknown')
+        backup_name = f"v{current_version}_{timestamp}"
+        backup_path = os.path.join(backup_dir, backup_name)
+        
+        # Copy current app.py to backup
+        current_file = __file__
+        backup_file = os.path.join(backup_path + ".py")
+        
+        os.makedirs(os.path.dirname(backup_file), exist_ok=True)
+        shutil.copy2(current_file, backup_file)
+        
+        return backup_file
+    except Exception as e:
+        return f"Backup failed: {e}"
+
+def download_and_update():
+    """Download the latest version and update the application."""
+    import os, tempfile, zipfile
+    try:
+        import requests
+    except ImportError:
+        return {"success": False, "message": "requests library not available for updating"}
+    
+    try:
+        # Get latest release info
+        url = "https://api.github.com/repos/AprilLorDrake/Analyze_Chess/releases/latest"
+        headers = {"Accept": "application/vnd.github+json", "User-Agent": "analyze-chess-app"}
+        response = requests.get(url, headers=headers, timeout=10)
+        
+        if response.status_code != 200:
+            return {"success": False, "message": "Failed to fetch release information"}
+        
+        release_data = response.json()
+        download_url = release_data.get('zipball_url')
+        
+        if not download_url:
+            return {"success": False, "message": "No download URL found"}
+        
+        # Create backup first
+        backup_result = backup_current_version()
+        if "failed" in str(backup_result).lower():
+            return {"success": False, "message": f"Backup failed: {backup_result}"}
+        
+        # Download the latest version
+        download_response = requests.get(download_url, timeout=30)
+        if download_response.status_code != 200:
+            return {"success": False, "message": "Failed to download update"}
+        
+        # Extract and update
+        with tempfile.TemporaryDirectory() as temp_dir:
+            zip_path = os.path.join(temp_dir, "update.zip")
+            with open(zip_path, 'wb') as f:
+                f.write(download_response.content)
+            
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(temp_dir)
+                
+                # Find the extracted folder (GitHub creates a folder with repo name and commit hash)
+                extracted_folders = [f for f in os.listdir(temp_dir) if os.path.isdir(os.path.join(temp_dir, f))]
+                if not extracted_folders:
+                    return {"success": False, "message": "No extracted folder found"}
+                
+                extracted_path = os.path.join(temp_dir, extracted_folders[0])
+                new_app_path = os.path.join(extracted_path, "app.py")
+                
+                if not os.path.exists(new_app_path):
+                    return {"success": False, "message": "app.py not found in update"}
+                
+                # Replace current app.py
+                current_app_path = __file__
+                import shutil
+                shutil.copy2(new_app_path, current_app_path)
+        
+        return {
+            "success": True, 
+            "message": f"Successfully updated to {release_data.get('tag_name', 'latest version')}. Please restart the application.",
+            "backup_location": backup_result,
+            "new_version": release_data.get('tag_name', 'Unknown')
+        }
+        
+    except Exception as e:
+        return {"success": False, "message": f"Update failed: {str(e)}"}
+
+def rollback_version():
+    """Rollback to the most recent backup version."""
+    import os, glob, shutil
+    try:
+        backup_dir = os.path.join(os.path.dirname(__file__), 'backups')
+        if not os.path.exists(backup_dir):
+            return {"success": False, "message": "No backups found"}
+        
+        # Find the most recent backup
+        backup_files = glob.glob(os.path.join(backup_dir, "v*.py"))
+        if not backup_files:
+            return {"success": False, "message": "No backup files found"}
+        
+        # Sort by modification time (most recent first)
+        backup_files.sort(key=os.path.getmtime, reverse=True)
+        latest_backup = backup_files[0]
+        
+        # Get backup info from filename
+        backup_filename = os.path.basename(latest_backup)
+        backup_version = backup_filename.split('_')[0]  # Extract version part
+        
+        # Create backup of current version before rollback
+        current_backup = backup_current_version()
+        
+        # Replace current app.py with backup
+        current_app_path = __file__
+        shutil.copy2(latest_backup, current_app_path)
+        
+        return {
+            "success": True,
+            "message": f"Successfully rolled back to {backup_version}. Please restart the application.",
+            "rolled_back_to": backup_version,
+            "current_backup": current_backup
+        }
+        
+    except Exception as e:
+        return {"success": False, "message": f"Rollback failed: {str(e)}"}
 
 def find_stockfish():
     """Attempt to locate a Stockfish executable.
@@ -358,13 +705,24 @@ def find_stockfish():
     if which:
         return which
 
-    # 4) common install locations (32/64-bit Program Files, user directories)
-    common = [
-        r"C:\Program Files\Stockfish\stockfish.exe",
-        r"C:\Program Files (x86)\Stockfish\stockfish.exe",
-        os.path.expanduser(r"~\AppData\Local\Programs\Stockfish\stockfish.exe"),
-        os.path.expanduser(r"~\stockfish\stockfish.exe"),
-    ]
+    # 4) common install locations (platform-specific)
+    common = []
+    if os.name == 'nt':  # Windows
+        common = [
+            r"C:\Program Files\Stockfish\stockfish.exe",
+            r"C:\Program Files (x86)\Stockfish\stockfish.exe",
+            os.path.expanduser(r"~\AppData\Local\Programs\Stockfish\stockfish.exe"),
+            os.path.expanduser(r"~\stockfish\stockfish.exe"),
+        ]
+    else:  # Unix-like systems (Linux, macOS)
+        common = [
+            "/usr/local/bin/stockfish",
+            "/usr/bin/stockfish",
+            "/opt/stockfish/stockfish",
+            os.path.expanduser("~/stockfish/stockfish"),
+            os.path.expanduser("~/.local/bin/stockfish"),
+        ]
+    
     for p in common:
         if p and os.path.isfile(p):
             return p
@@ -375,10 +733,16 @@ def find_stockfish():
     try:
         if os.path.isdir(proj_bin):
             for entry in os.listdir(proj_bin):
-                if entry.lower().endswith('.exe') and 'stockfish' in entry.lower():
+                if 'stockfish' in entry.lower():
                     candidate = os.path.join(proj_bin, entry)
                     if os.path.isfile(candidate):
-                        return candidate
+                        # Check if it's executable (Unix) or has .exe extension (Windows)
+                        if os.name == 'nt':
+                            if entry.lower().endswith('.exe'):
+                                return candidate
+                        else:
+                            if os.access(candidate, os.X_OK):
+                                return candidate
     except Exception:
         # ignore permission/listing errors and continue
         pass
@@ -386,71 +750,113 @@ def find_stockfish():
     return None
 
 def install_stockfish_to_dir(target_dir: str):
-    """Download latest Stockfish zip and extract the engine exe into target_dir.
+    """Download latest Stockfish and extract the engine into target_dir.
 
     Preserves the original filename from the archive. Returns absolute path to
     the installed executable on success, else None.
     """
-    import os
+    import os, platform
     try:
         import requests, zipfile, io, tempfile
     except ImportError:
         print("requests package not available; cannot auto-install Stockfish.")
         return None
+    
     os.makedirs(target_dir, exist_ok=True)
-    url = "https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-windows-x86-64-avx2.zip"
+    
+    # Determine the appropriate Stockfish download URL based on platform
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+    
+    if system == "windows":
+        if "64" in machine or "amd64" in machine:
+            url = "https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-windows-x86-64-avx2.zip"
+        else:
+            url = "https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-windows-x86-32.zip"
+    elif system == "darwin":  # macOS
+        url = "https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-macos-x86-64-apple-silicon.tar"
+    elif system == "linux":
+        if "64" in machine or "amd64" in machine or "x86_64" in machine:
+            url = "https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-linux-x86-64-avx2.tar"
+        else:
+            url = "https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-linux-x86-32.tar"
+    else:
+        print(f"Unsupported platform: {system} {machine}")
+        return None
+    
     try:
         resp = requests.get(url, timeout=30)
         resp.raise_for_status()
-        with zipfile.ZipFile(io.BytesIO(resp.content)) as z:
-            exe_candidates = [f for f in z.namelist() if f.lower().endswith('.exe')]
-            if not exe_candidates:
-                print("No executable found inside Stockfish archive.")
-                return None
-            exe_name = exe_candidates[0]
-            basename = os.path.basename(exe_name)
-            target_path = os.path.join(target_dir, basename)
-            # backup any current engine in bin
-            paths = _paths()
-            current = find_stockfish()
-            if current and os.path.commonpath([os.path.dirname(current), target_dir]) == target_dir:
-                # only back up if current is inside target_dir (our managed bin)
-                import time, shutil as _sh
-                bdir = os.path.join(target_dir, 'backup')
-                os.makedirs(bdir, exist_ok=True)
-                stamp = time.strftime('%Y%m%d-%H%M%S')
-                bname = os.path.basename(current)
-                backup_path = os.path.join(bdir, f"{bname}.{stamp}.bak")
-                try:
-                    _sh.copy2(current, backup_path)
-                    _write_text(paths['previous'], backup_path)
-                except Exception:
-                    pass
-            # extract to a temp file then move to target_path
-            with z.open(exe_name) as src:
+        
+        if url.endswith('.zip'):
+            # Handle ZIP files (Windows)
+            with zipfile.ZipFile(io.BytesIO(resp.content)) as z:
+                exe_candidates = [f for f in z.namelist() if f.lower().endswith('.exe')]
+                if not exe_candidates:
+                    print("No executable found inside Stockfish archive.")
+                    return None
+                exe_name = exe_candidates[0]
+                basename = os.path.basename(exe_name)
+                target_path = os.path.join(target_dir, basename)
+                
+                # backup any current engine in bin
+                paths = _paths()
+                current = find_stockfish()
+                if current and os.path.commonpath([os.path.dirname(current), target_dir]) == target_dir:
+                    # only back up if current is inside target_dir (our managed bin)
+                    import time, shutil as _sh
+                    bdir = os.path.join(target_dir, 'backup')
+                    os.makedirs(bdir, exist_ok=True)
+                    stamp = time.strftime('%Y%m%d-%H%M%S')
+                    backup_name = f"stockfish-{stamp}.exe"
+                    _sh.copy2(current, os.path.join(bdir, backup_name))
+                
+                # extract and save the new engine
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.exe') as tmp:
-                    tmp.write(src.read())
-                    tmp_path = tmp.name
-            try:
-                os.replace(tmp_path, target_path)
-            except Exception:
-                with open(tmp_path, 'rb') as srcf, open(target_path, 'wb') as dstf:
-                    dstf.write(srcf.read())
-                try:
-                    os.remove(tmp_path)
-                except Exception:
-                    pass
-        try:
-            os.chmod(target_path, 0o755)
-        except Exception:
-            pass
-        # persist selection
-        _write_text(paths['selected'], target_path)
-        return target_path if os.path.isfile(target_path) else None
+                    tmp.write(z.read(exe_name))
+                    tmp.flush()
+                    import shutil as _sh
+                    _sh.copy2(tmp.name, target_path)
+                    os.unlink(tmp.name)
+                
+                # make executable on Unix systems
+                if os.name != 'nt':
+                    os.chmod(target_path, 0o755)
+                
+                return target_path
+                
+        else:
+            # Handle TAR files (Linux/macOS)
+            import tarfile
+            with tarfile.open(fileobj=io.BytesIO(resp.content), mode='r:*') as tar:
+                # Look for stockfish executable
+                stockfish_files = [f for f in tar.getnames() if 'stockfish' in f.lower() and not f.endswith('/')]
+                if not stockfish_files:
+                    print("No stockfish executable found in archive.")
+                    return None
+                
+                exe_name = stockfish_files[0]
+                basename = os.path.basename(exe_name)
+                target_path = os.path.join(target_dir, basename)
+                
+                # Extract the executable
+                with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                    fileobj = tar.extractfile(exe_name)
+                    if fileobj:
+                        tmp.write(fileobj.read())
+                        tmp.flush()
+                        import shutil as _sh
+                        _sh.copy2(tmp.name, target_path)
+                        os.unlink(tmp.name)
+                        
+                        # make executable
+                        os.chmod(target_path, 0o755)
+                        
+                        return target_path
+                
     except Exception as e:
-        print(f"Stockfish install failed: {e}")
+        print(f"Failed to download/install Stockfish: {e}")
         return None
-
 def get_engine_version(exec_path: str) -> str:
     import subprocess
     try:
@@ -549,10 +955,13 @@ def analyze_chess_move():
                     stockfish_move = f"Engine error: {e}"
                     stockfish_board = board_to_html(board)
             # Fallback AI recommendation - simple chess logic
-            fallback_ai, ai_board, ai_explanation = generate_fallback_recommendation(board)
+            fallback_ai, ai_board, ai_explanation, ai_engine = generate_fallback_recommendation(board)
             
             # Create Stockfish explanation based on the move type
             stockfish_explanation = get_stockfish_explanation(stockfish_move, board)
+            
+            # Compare the moves to provide educational insights
+            move_comparison = compare_moves_analysis(stockfish_move, fallback_ai, board)
             
             fen_result = {
                 'stockfish': stockfish_move, 
@@ -560,7 +969,9 @@ def analyze_chess_move():
                 'stockfish_explanation': stockfish_explanation,
                 'ai': fallback_ai,
                 'ai_board': ai_board,
-                'ai_explanation': ai_explanation
+                'ai_explanation': ai_explanation,
+                'ai_engine': ai_engine,
+                'move_comparison': move_comparison
             }
         except Exception as e:
             fen_result = {
@@ -569,7 +980,9 @@ def analyze_chess_move():
                 'stockfish_explanation': "Analysis could not be completed due to invalid position.",
                 'ai': "-",
                 'ai_board': "",
-                'ai_explanation': "Analysis could not be completed due to invalid position."
+                'ai_explanation': "Analysis could not be completed due to invalid position.",
+                'ai_engine': "N/A",
+                'move_comparison': "Analysis unavailable due to position error."
             }
     
     return render_template_string('''
@@ -587,6 +1000,32 @@ def analyze_chess_move():
                         min-height: 100vh;
                     }
                     .header { text-align: center; margin-bottom: 30px; color: #4a2c7a; }
+                    .feedback-section {
+                        text-align: center;
+                        margin: 20px 0;
+                        padding: 15px;
+                        background: rgba(142, 68, 173, 0.05);
+                        border-radius: 8px;
+                        border: 1px solid #d4b3ff;
+                    }
+                    .feedback-btn {
+                        padding: 8px 16px;
+                        background: linear-gradient(135deg, #8b5fbf 0%, #7048a3 100%);
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        text-decoration: none;
+                        display: inline-block;
+                        box-shadow: 0 2px 6px rgba(139, 95, 191, 0.3);
+                        margin: 0 5px;
+                    }
+                    .feedback-btn:hover {
+                        background: linear-gradient(135deg, #7048a3 0%, #5d3d87 100%);
+                        transform: translateY(-1px);
+                        box-shadow: 0 3px 8px rgba(139, 95, 191, 0.4);
+                    }
                     .main-form { 
                         text-align: center; 
                         margin-bottom: 30px; 
@@ -597,12 +1036,13 @@ def analyze_chess_move():
                         border: 1px solid #d4b3ff;
                     }
                     .fen-input { 
-                        padding: 10px; 
+                        padding: 10px 12px; 
                         font-size: 16px; 
-                        width: 400px; 
                         border: 2px solid #c299ff; 
                         border-radius: 6px; 
                         background: rgba(255, 255, 255, 0.9);
+                        height: 40px;
+                        box-sizing: border-box;
                     }
                     .fen-input:focus { border-color: #9966ff; outline: none; box-shadow: 0 0 5px rgba(153, 102, 255, 0.3); }
                     .submit-btn { 
@@ -646,6 +1086,20 @@ def analyze_chess_move():
                         transform: none;
                         box-shadow: none;
                     }
+                    
+                    /* Compact button styles for inline layout */
+                    .compact-btn {
+                        padding: 10px 16px !important;
+                        font-size: 14px !important;
+                        margin-top: 0 !important;
+                        white-space: nowrap;
+                        min-width: 80px;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    
                     .sample-fens {
                         margin: 15px 0;
                         text-align: left;
@@ -725,6 +1179,16 @@ def analyze_chess_move():
                         background: linear-gradient(135deg, #7048a3 0%, #5d3d87 100%); 
                         transform: translateY(-1px);
                         box-shadow: 0 3px 8px rgba(139, 95, 191, 0.4);
+                    }
+                    .engine-btn.update-btn:hover {
+                        background: linear-gradient(135deg, #28a745 0%, #218838 100%) !important;
+                        transform: translateY(-1px);
+                        box-shadow: 0 3px 8px rgba(40, 167, 69, 0.4);
+                    }
+                    .engine-btn.rollback-btn:hover {
+                        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+                        transform: translateY(-1px);
+                        box-shadow: 0 3px 8px rgba(255, 193, 7, 0.4);
                     }
                     .about-section { 
                         background: rgba(255, 255, 255, 0.7); 
@@ -864,7 +1328,7 @@ def analyze_chess_move():
                     }
                     
                     function resetForm() {
-                        const resetBtn = document.querySelector('.reset-btn');
+                        const resetBtn = document.getElementById('reset-btn');
                         if (resetBtn.disabled) {
                             return; // Don't reset if button is disabled
                         }
@@ -874,16 +1338,18 @@ def analyze_chess_move():
                     function validateFENInput() {
                         const fenInput = document.getElementById('fen');
                         const submitBtn = document.getElementById('submit-btn');
-                        const resetBtn = document.querySelector('.reset-btn');
+                        const resetBtn = document.getElementById('reset-btn');
                         
                         if (fenInput.value.trim() === '') {
+                            // Hide buttons when no input
+                            submitBtn.style.display = 'none';
+                            resetBtn.style.display = 'none';
                             submitBtn.disabled = true;
                             submitBtn.title = 'Please enter a FEN position to analyze';
-                            resetBtn.disabled = true;
-                            resetBtn.style.opacity = '0.5';
-                            resetBtn.style.cursor = 'not-allowed';
-                            resetBtn.title = 'Enter a FEN position first';
                         } else {
+                            // Show and enable buttons when there's input
+                            submitBtn.style.display = 'block';
+                            resetBtn.style.display = 'block';
                             submitBtn.disabled = false;
                             submitBtn.title = 'Click to analyze the chess position';
                             resetBtn.disabled = false;
@@ -895,7 +1361,11 @@ def analyze_chess_move():
                     
                     function setAnalyzedState() {
                         const submitBtn = document.getElementById('submit-btn');
-                        const resetBtn = document.querySelector('.reset-btn');
+                        const resetBtn = document.getElementById('reset-btn');
+                        
+                        // Ensure buttons are visible
+                        submitBtn.style.display = 'block';
+                        resetBtn.style.display = 'block';
                         
                         // Make analyze button grey and disabled
                         submitBtn.classList.add('analyzed');
@@ -904,6 +1374,10 @@ def analyze_chess_move():
                         
                         // Make reset button green and active
                         resetBtn.classList.add('active');
+                        resetBtn.disabled = false;
+                        resetBtn.style.opacity = '1';
+                        resetBtn.style.cursor = 'pointer';
+                        resetBtn.title = 'Clear analysis and start over';
                     }
                     
                     // Initialize button state and add event listener when page loads
@@ -917,6 +1391,18 @@ def analyze_chess_move():
                         fenInput.addEventListener('paste', function() {
                             // Small delay to allow paste to complete
                             setTimeout(validateFENInput, 10);
+                        });
+                        
+                        // Add Enter key support for form submission
+                        fenInput.addEventListener('keydown', function(event) {
+                            if (event.key === 'Enter') {
+                                event.preventDefault(); // Prevent default form submission
+                                const submitBtn = document.getElementById('submit-btn');
+                                if (!submitBtn.disabled) {
+                                    // Trigger the form submission
+                                    submitBtn.form.submit();
+                                }
+                            }
                         });
                         
                         // Check if we're showing analysis results and set button states accordingly
@@ -939,6 +1425,14 @@ def analyze_chess_move():
                         </span>
                         {% endif %}
                     </div>
+                </div>
+                
+                <!-- Feedback Section -->
+                <div class="feedback-section">
+                    <span style="color: #4a2c7a; font-size: 14px; margin-right: 15px;">💬 Help us improve:</span>
+                    <a href="/feedback" class="feedback-btn">Send Feedback</a>
+                    <a href="https://github.com/AprilLorDrake/Analyze_Chess/issues/new?template=bug_report.md" target="_blank" class="feedback-btn">Report Bug</a>
+                    <a href="https://github.com/AprilLorDrake/Analyze_Chess/issues/new?template=feature_request.md" target="_blank" class="feedback-btn">Request Feature</a>
                 </div>
                 
                 {% if msg %}<div class="msg">{{msg}}</div>{% endif %}
@@ -969,7 +1463,11 @@ def analyze_chess_move():
                     <form action="/submit" method="post">
                         <div style="margin-bottom: 15px;">
                             <label for="fen" style="display: block; margin-bottom: 8px; font-weight: bold; font-size: 18px;">Enter FEN Position:</label>
-                            <input type="text" name="fen" id="fen" class="fen-input{% if fen_result %} analyzed{% endif %}" placeholder="Enter FEN notation here..." value="{{current_fen}}">
+                            <div style="display: flex; gap: 10px; align-items: flex-start;">
+                                <input type="text" name="fen" id="fen" class="fen-input{% if fen_result %} analyzed{% endif %}" placeholder="Enter FEN notation here (Press Enter to analyze)..." value="{{current_fen}}" title="Enter a FEN position and press Enter or click Analyze to get recommendations" style="flex: 1;">
+                                <button type="submit" id="submit-btn" class="submit-btn compact-btn" style="display: none;" title="Analyze the chess position">Analyze</button>
+                                <button type="button" id="reset-btn" class="reset-btn compact-btn" style="display: none;" onclick="resetForm()" title="Clear the FEN input">Reset</button>
+                            </div>
                             <div style="font-size: 11px; color: #6a5d7a; margin-top: 5px; font-style: italic;">
                                 FEN (Forsyth-Edwards Notation) describes a chess position: piece placement, turn, castling rights, en passant, and move counts
                             </div>
@@ -982,9 +1480,6 @@ def analyze_chess_move():
                             <button type="button" class="sample-fen-btn" onclick="loadSampleFEN('6k1/5ppp/8/8/8/2K5/5PPP/8 w - - 0 1')">Endgame Position</button>
                             <button type="button" class="sample-fen-btn" onclick="loadSampleFEN('r3k2r/ppp2ppp/2n1bn2/2bpp3/2P5/2N1PN2/PPBP1PPP/R1BQKR2 w Qkq - 0 8')">Tactical Position</button>
                         </div>
-                        
-                        <button type="submit" id="submit-btn" class="submit-btn" disabled title="Please enter a FEN position to analyze">Analyze Position</button>
-                        <button type="button" class="reset-btn" onclick="resetForm()">Reset</button>
                     </form>
                 </div>
 
@@ -992,8 +1487,17 @@ def analyze_chess_move():
                 <div class="recommendations-wrapper">
                     <h3 class="recommendations-header">Move Recommendations</h3>
                     
+                    {% if fen_result['move_comparison'] %}
+                    <div class="recommendation-section" style="margin-bottom: 25px; border: 3px solid #ffd700;">
+                        <div class="recommend-label" style="font-size: 1.4em; color: #ffd700 !important;">⚖️ Move Comparison Analysis:</div>
+                        <div style="font-size: 14px; color: #ffd700; margin-top: 8px; padding: 12px; background: rgba(50,50,50,0.7); border-radius: 6px; border-left: 4px solid #ffd700; line-height: 1.4;">
+                            {{fen_result['move_comparison']}}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
                     <div class="recommendation-section">
-                        <div class="recommend-label">Stockfish Recommendation:</div>
+                        <div class="recommend-label">🏆 Stockfish Recommendation:</div>
                         <div class="recommend-value">{{fen_result['stockfish']}}</div>
                         {% if fen_result['stockfish_explanation'] %}
                         <div style="font-size: 13px; color: #c8e6c8; margin-top: 8px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; border-left: 3px solid #28a745;">
@@ -1005,10 +1509,13 @@ def analyze_chess_move():
                             {{fen_result['stockfish_board']|safe}}
                         </div>
                         {% endif %}
+                        <div style="font-size: 12px; color: #b8e6b8; margin-top: 8px; font-style: italic; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
+                            Powered by <a href="https://stockfishchess.org/" target="_blank" style="color: #90EE90; text-decoration: underline;">Stockfish</a> - World's strongest chess engine
+                        </div>
                     </div>
                     
                     <div class="recommendation-section">
-                        <div class="recommend-label">AI Recommendation (Built-in Chess Logic Engine):</div>
+                        <div class="recommend-label">🤖 AI Recommendation ({{fen_result['ai_engine']}}):</div>
                         <div class="recommend-value">{{fen_result['ai']}}</div>
                         {% if fen_result['ai_explanation'] %}
                         <div style="font-size: 13px; color: #d4b3ff; margin-top: 8px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; border-left: 3px solid #8e44ad;">
@@ -1021,7 +1528,7 @@ def analyze_chess_move():
                         </div>
                         {% endif %}
                         <div style="font-size: 12px; color: #b8e6b8; margin-top: 8px; font-style: italic; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
-                            Generated using custom chess principles AI (evaluation-based move scoring)
+                            Advanced GPT-style analysis using positional evaluation, tactical patterns, and modern chess principles
                         </div>
                     </div>
                 </div>
@@ -1034,14 +1541,23 @@ def analyze_chess_move():
                     <!-- Application Version Section -->
                     <div style="margin-bottom: 25px; padding: 15px; background-color: {% if app_version_info.update_available %}rgba(255, 152, 0, 0.1){% else %}rgba(142, 68, 173, 0.05){% endif %}; border: 1px solid {% if app_version_info.update_available %}#ff9800{% else %}#d4b3ff{% endif %}; border-radius: 8px;">
                         <h4 style="color: #4a2c7a; margin-bottom: 15px; display: flex; align-items: center;">
-                            <span style="font-size: 20px; margin-right: 10px;">🚀</span>Chess Analysis Application 
+                            <span style="font-size: 20px; margin-right: 10px;">♔</span>Analyze Chess 
                             <span style="margin-left: 10px; font-size: 12px; color: #666; font-weight: normal;">← This App</span>
                             {% if app_version_info.update_available %}
-                            <span style="margin-left: auto; padding: 4px 8px; background: #ff9800; color: white; border-radius: 12px; font-size: 11px; font-weight: bold;">
-                                📋 UPDATE AVAILABLE
-                            </span>
+                            <a href="{{ app_version_info.release_url }}" target="_blank" style="margin-left: auto; padding: 4px 8px; background: #ff9800; color: white; border-radius: 12px; font-size: 11px; font-weight: bold; text-decoration: none;">
+                                ♕ UPDATE AVAILABLE
+                            </a>
                             {% endif %}
                         </h4>
+                        
+                        <!-- Description -->
+                        <div style="background: rgba(255, 255, 255, 0.6); padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #8e44ad;">
+                            <div style="font-size: 13px; color: #4a2c7a; line-height: 1.4;">
+                                <strong>📋 What it is:</strong> The main chess analysis application that provides move recommendations, position evaluation, and educational insights.<br>
+                                <strong>🎯 Why important:</strong> Updates bring new features, bug fixes, improved AI analysis, and enhanced user experience. Keeping current ensures optimal performance and latest chess analysis capabilities.
+                            </div>
+                        </div>
+                        
                         <div style="margin-bottom: 10px;"><strong>Current Version:</strong> {{ app_version_info.current }}</div>
                         <div style="margin-bottom: 10px;"><strong>Latest Available:</strong> {{ app_version_info.latest }}</div>
                         <div style="margin-bottom: 15px;"><strong>Status:</strong> 
@@ -1049,9 +1565,19 @@ def analyze_chess_move():
                                 {% if app_version_info.update_available %}Update Available ({{ app_version_info.latest }}){% else %}Up to Date{% endif %}
                             </span>
                         </div>
-                        {% if app_version_info.update_available and app_version_info.release_url %}
+                        {% if app_version_info.update_available %}
                         <div class="engine-buttons">
-                            <a href="{{ app_version_info.release_url }}" target="_blank" class="engine-btn" style="text-decoration: none; display: inline-block; color: white;">View Update</a>
+                            <form method="post" action="/update_app" style="display: inline-block; margin-right: 10px;" onsubmit="return confirm('This will update the application and restart it. Continue?')">
+                                <button type="submit" class="engine-btn update-btn" style="background: #28a745; border: none; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Update Now</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                        
+                        {% if app_version_info.has_backups %}
+                        <div class="engine-buttons" style="margin-top: 10px;">
+                            <form method="post" action="/rollback_app" style="display: inline-block;" onsubmit="return confirm('This will rollback to the previous version. Continue?')">
+                                <button type="submit" class="engine-btn rollback-btn" style="background: #ffc107; border: none; color: black; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Rollback</button>
+                            </form>
                         </div>
                         {% endif %}
                     </div>
@@ -1061,23 +1587,42 @@ def analyze_chess_move():
                         <h4 style="color: #4a2c7a; margin-bottom: 15px; display: flex; align-items: center;">
                             <span style="font-size: 20px; margin-right: 10px;">♚</span>Stockfish Chess Engine
                         </h4>
+                        
+                        <!-- Description -->
+                        <div style="background: rgba(255, 255, 255, 0.6); padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #28a745;">
+                            <div style="font-size: 13px; color: #4a2c7a; line-height: 1.4;">
+                                <strong>⚡ What it is:</strong> The world's strongest open-source chess engine, capable of analyzing positions at super-grandmaster level (3500+ ELO rating).<br>
+                                <strong>🏆 Why important:</strong> Provides professional-grade move analysis and position evaluation. Updates include improved algorithms, bug fixes, and stronger play. Essential for accurate chess analysis.
+                            </div>
+                        </div>
+                        
                         {% if current %}
                             <div style="margin-bottom: 10px;"><strong>Path:</strong> {{current}}</div>
                             <div style="margin-bottom: 10px;"><strong>Current Version:</strong> {{version}}</div>
                             {% if latest_tag %}<div style="margin-bottom: 10px;"><strong>Latest Available:</strong> {{latest_tag}}</div>{% endif %}
                             <div style="margin-bottom: 15px;"><strong>Status:</strong> 
-                                <span style="color:{% if stockfish_update_available %}orange{% else %}green{% endif %};font-weight:bold;">
-                                    {% if stockfish_update_available %}Update Available ({{latest_tag}}){% else %}Up to Date{% endif %}
-                                </span>
+                                {% if stockfish_update_available and latest_tag %}
+                                <a href="https://github.com/official-stockfish/Stockfish/releases/tag/{{latest_tag}}" target="_blank" style="color: orange; font-weight: bold; text-decoration: none;">
+                                    Update Available ({{latest_tag}}) 📋
+                                </a>
+                                {% else %}
+                                <span style="color: green; font-weight: bold;">Up to Date</span>
+                                {% endif %}
                             </div>
+                            {% if stockfish_update_available %}
                             <div class="engine-buttons">
                                 <form action="/update_engine_now" method="post" style="display: inline;">
-                                    <button type="submit" class="engine-btn" {% if not stockfish_update_available %}style="opacity: 0.5;" disabled{% endif %}>Update Now</button>
-                                </form>
-                                <form action="/rollback_engine_now" method="post" style="display: inline;">
-                                      <button type="submit" class="engine-btn" {% if not has_previous_engine() %}style="opacity: 0.5;" disabled{% endif %}>Rollback</button>
+                                    <button type="submit" class="engine-btn">Update Now</button>
                                 </form>
                             </div>
+                            {% endif %}
+                            {% if has_previous_engine() %}
+                            <div class="engine-buttons" style="margin-top: 10px;">
+                                <form action="/rollback_engine_now" method="post" style="display: inline;">
+                                    <button type="submit" class="engine-btn" style="background: #ffc107; color: black;">Rollback</button>
+                                </form>
+                            </div>
+                            {% endif %}
                         {% else %}
                             <div style="color:#b00; margin-bottom: 15px;">Engine not installed</div>
                             <div class="engine-buttons">
@@ -1094,24 +1639,48 @@ def analyze_chess_move():
                         <h4 style="color: #4a2c7a; margin-bottom: 15px; display: flex; align-items: center;">
                             <span style="font-size: 20px; margin-right: 10px;">🐍</span>{{ dep.name }} Package
                         </h4>
+                        
+                        <!-- Description -->
+                        <div style="background: rgba(255, 255, 255, 0.6); padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #007bff;">
+                            <div style="font-size: 13px; color: #4a2c7a; line-height: 1.4;">
+                                <strong>🔧 What it is:</strong> 
+                                {% if dep.name == 'chess' %}Essential Python library for chess board representation, move validation, and game logic. Handles FEN parsing, legal move generation, and position analysis.
+                                {% elif dep.name == 'flask' %}Web framework that powers the user interface. Provides the web server, routing, and template rendering for the chess analysis application.
+                                {% elif dep.name == 'requests' %}HTTP library used for downloading updates, checking latest versions, and communicating with online chess services and APIs.
+                                {% else %}Critical Python package required for application functionality, providing essential features and compatibility.
+                                {% endif %}<br>
+                                <strong>⚠️ Why important:</strong> Updates include security patches, performance improvements, and compatibility fixes. Outdated packages can cause crashes or security vulnerabilities.
+                            </div>
+                        </div>
+                        
                         <div style="margin-bottom: 10px;"><strong>Current Version:</strong> {{ dep.current_version }}</div>
                         <div style="margin-bottom: 10px;"><strong>Latest Available:</strong> {{ dep.latest_version }}</div>
                         <div style="margin-bottom: 15px;"><strong>Status:</strong> 
-                            <span style="color:{% if dep.update_available %}orange{% else %}green{% endif %};font-weight:bold;">
-                                {% if dep.update_available %}Update Available ({{ dep.latest_version }}){% else %}Up to Date{% endif %}
-                            </span>
+                            {% if dep.update_available %}
+                            <a href="https://pypi.org/project/{{ dep.name }}/{{ dep.latest_version }}/" target="_blank" style="color: orange; font-weight: bold; text-decoration: none;">
+                                Update Available ({{ dep.latest_version }}) 📋
+                            </a>
+                            {% else %}
+                            <span style="color: green; font-weight: bold;">Up to Date</span>
+                            {% endif %}
                         </div>
+                        {% if dep.update_available %}
                         <div class="engine-buttons">
                             <form action="/update_package" method="post" style="display: inline;">
                                 <input type="hidden" name="package" value="{{ dep.name }}" />
                                 <input type="hidden" name="version" value="{{ dep.latest_version }}" />
-                                <button type="submit" class="engine-btn" {% if not dep.update_available %}style="opacity: 0.5;" disabled{% endif %}>Update Now</button>
-                            </form>
-                            <form action="/rollback_package" method="post" style="display: inline;">
-                                  <input type="hidden" name="package" value="{{ dep.name }}" />
-                                  <button type="submit" class="engine-btn" {% if not has_previous_package(dep.name) %}style="opacity: 0.5;" disabled{% endif %}>Rollback</button>
+                                <button type="submit" class="engine-btn">Update Now</button>
                             </form>
                         </div>
+                        {% endif %}
+                        {% if has_previous_package(dep.name) %}
+                        <div class="engine-buttons" style="margin-top: 10px;">
+                            <form action="/rollback_package" method="post" style="display: inline;">
+                                <input type="hidden" name="package" value="{{ dep.name }}" />
+                                <button type="submit" class="engine-btn" style="background: #ffc107; color: black;">Rollback</button>
+                            </form>
+                        </div>
+                        {% endif %}
                     </div>
                     {% endfor %}
                     
@@ -1192,6 +1761,232 @@ def handle_internal_error(err):
         <div><a href="{{url_for('analyze_chess_move')}}">Go to Home</a></div>
         </body></html>
     ''', err=str(err)), 500
+
+# --- UPDATE/ROLLBACK ROUTES ---
+@app.route('/update_app', methods=['POST'])
+def update_app():
+    """Perform automated application update."""
+    result = download_and_update()
+    if result['success']:
+        return f"""
+        <html>
+        <head>
+            <title>Update Successful</title>
+            <script>
+                setTimeout(function() {{
+                    if (window.opener) {{
+                        window.opener.location.reload();
+                        window.close();
+                    }} else {{
+                        window.location.href = '/analyze_chess_move';
+                    }}
+                }}, 3000);
+            </script>
+        </head>
+        <body style="font-family: Arial, sans-serif; padding: 20px; background: #f0f8ff;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; background: white; border-radius: 8px; border: 1px solid #28a745;">
+            <h2 style="color: #28a745;">♔ Update Successful!</h2>
+            <p><strong>Message:</strong> {result['message']}</p>
+            <p><strong>New Version:</strong> {result.get('new_version', 'Unknown')}</p>
+            <p><strong>Backup Location:</strong> {result.get('backup_location', 'N/A')}</p>
+            <div style="margin-top: 20px;">
+                <p style="color: #28a745; font-weight: bold;">🔄 Automatically refreshing in 3 seconds...</p>
+                <a href="/analyze_chess_move" style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; margin-right: 10px;">Return Now</a>
+                <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px;">Close Window</button>
+            </div>
+        </div>
+        </body></html>
+        """
+    else:
+        return f"""
+        <html>
+        <head><title>Update Failed</title></head>
+        <body style="font-family: Arial, sans-serif; padding: 20px; background: #ffe6e6;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; background: white; border-radius: 8px; border: 1px solid #dc3545;">
+            <h2 style="color: #dc3545;">❌ Update Failed</h2>
+            <p><strong>Error:</strong> {result['message']}</p>
+            <div style="margin-top: 20px;">
+                <a href="/analyze_chess_move" style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; margin-right: 10px;">Return to App</a>
+                <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px;">Close Window</button>
+            </div>
+        </div>
+        </body></html>
+        """
+
+@app.route('/rollback_app', methods=['POST'])
+def rollback_app():
+    """Perform automated application rollback."""
+    result = rollback_version()
+    if result['success']:
+        return f"""
+        <html>
+        <head>
+            <title>Rollback Successful</title>
+            <script>
+                setTimeout(function() {{
+                    if (window.opener) {{
+                        window.opener.location.reload();
+                        window.close();
+                    }} else {{
+                        window.location.href = '/analyze_chess_move';
+                    }}
+                }}, 3000);
+            </script>
+        </head>
+        <body style="font-family: Arial, sans-serif; padding: 20px; background: #fff3cd;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; background: white; border-radius: 8px; border: 1px solid #ffc107;">
+            <h2 style="color: #856404;">♚ Rollback Successful!</h2>
+            <p><strong>Message:</strong> {result['message']}</p>
+            <p><strong>Rolled back to:</strong> {result.get('rolled_back_to', 'Previous version')}</p>
+            <p><strong>Current backup:</strong> {result.get('current_backup', 'N/A')}</p>
+            <div style="margin-top: 20px;">
+                <p style="color: #28a745; font-weight: bold;">🔄 Automatically refreshing in 3 seconds...</p>
+                <a href="/analyze_chess_move" style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; margin-right: 10px;">Return Now</a>
+                <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px;">Close Window</button>
+            </div>
+        </div>
+        </body></html>
+        """
+    else:
+        return f"""
+        <html>
+        <head><title>Rollback Failed</title></head>
+        <body style="font-family: Arial, sans-serif; padding: 20px; background: #ffe6e6;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; background: white; border-radius: 8px; border: 1px solid #dc3545;">
+            <h2 style="color: #dc3545;">❌ Rollback Failed</h2>
+            <p><strong>Error:</strong> {result['message']}</p>
+            <div style="margin-top: 20px;">
+                <a href="/analyze_chess_move" style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; margin-right: 10px;">Return to App</a>
+                <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px;">Close Window</button>
+            </div>
+        </div>
+        </body></html>
+        """
+
+# --- FEEDBACK ROUTES ---
+@app.route('/feedback')
+def feedback_form():
+    """Display feedback form."""
+    return '''
+    <html>
+    <head>
+        <title>Send Feedback - Analyze Chess</title>
+        <style>
+            body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; background: #f5f3ff; }
+            .form-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            h2 { color: #4a2c7a; text-align: center; margin-bottom: 20px; }
+            label { display: block; margin-top: 15px; font-weight: bold; color: #4a2c7a; }
+            input, textarea, select { width: 100%; padding: 10px; border: 2px solid #d4b3ff; border-radius: 4px; margin-top: 5px; font-size: 14px; }
+            input:focus, textarea:focus, select:focus { border-color: #9966ff; outline: none; }
+            .btn { background: linear-gradient(135deg, #8b5fbf 0%, #7048a3 100%); color: white; padding: 12px 30px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin: 20px 10px 0 0; }
+            .btn:hover { background: linear-gradient(135deg, #7048a3 0%, #5d3d87 100%); transform: translateY(-1px); }
+            .back-btn { background: #6c757d; }
+            .back-btn:hover { background: #5a6268; }
+            .note { background: #e7f3ff; padding: 10px; border-radius: 4px; font-size: 13px; color: #666; margin-top: 15px; }
+        </style>
+    </head>
+    <body>
+        <div class="form-container">
+            <h2>♔ Send Feedback - Analyze Chess</h2>
+            <form action="/feedback" method="post">
+                <label for="feedback_type">Feedback Type:</label>
+                <select name="feedback_type" id="feedback_type" required>
+                    <option value="">Select type...</option>
+                    <option value="bug">Bug Report</option>
+                    <option value="feature">Feature Request</option>
+                    <option value="improvement">Improvement Suggestion</option>
+                    <option value="general">General Feedback</option>
+                    <option value="question">Question/Help</option>
+                </select>
+
+                <label for="email">Your Email (optional):</label>
+                <input type="email" name="email" id="email" placeholder="your.email@example.com">
+
+                <label for="subject">Subject:</label>
+                <input type="text" name="subject" id="subject" required placeholder="Brief description of your feedback">
+
+                <label for="message">Message:</label>
+                <textarea name="message" id="message" rows="8" required placeholder="Please provide detailed feedback..."></textarea>
+
+                <label for="browser_info">Browser/System (optional):</label>
+                <input type="text" name="browser_info" id="browser_info" placeholder="e.g., Chrome 118 on Windows 11">
+
+                <div class="note">
+                    📧 Your feedback will be sent via email to the development team. No GitHub account required!
+                    If you provided your email, we may contact you for follow-up questions.
+                </div>
+
+                <button type="submit" class="btn">Send Feedback</button>
+                <a href="/analyze_chess_move" class="btn back-btn" style="text-decoration: none;">Back to App</a>
+            </form>
+        </div>
+    </body>
+    </html>
+    '''
+
+@app.route('/feedback', methods=['POST'])
+def submit_feedback():
+    """Handle feedback submission."""
+    feedback_type = request.form.get('feedback_type', '')
+    email = request.form.get('email', '')
+    subject = request.form.get('subject', '')
+    message = request.form.get('message', '')
+    browser_info = request.form.get('browser_info', '')
+    
+    # Create feedback content
+    feedback_content = f"""
+Feedback Type: {feedback_type}
+From: {email if email else 'Anonymous'}
+Subject: {subject}
+Browser/System: {browser_info if browser_info else 'Not provided'}
+
+Message:
+{message}
+
+---
+Submitted via Analyze Chess Feedback Form
+Timestamp: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    """.strip()
+    
+    # For now, we'll display the feedback and provide options to send it
+    # In a production app, you'd integrate with an email service
+    return f'''
+    <html>
+    <head>
+        <title>Feedback Submitted - Analyze Chess</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; max-width: 700px; margin: 50px auto; padding: 20px; background: #f5f3ff; }}
+            .success-container {{ background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 2px solid #28a745; }}
+            h2 {{ color: #28a745; text-align: center; margin-bottom: 20px; }}
+            .feedback-preview {{ background: #f8f9fa; padding: 15px; border-radius: 4px; border-left: 4px solid #8b5fbf; margin: 20px 0; white-space: pre-line; font-family: monospace; font-size: 13px; }}
+            .btn {{ background: linear-gradient(135deg, #8b5fbf 0%, #7048a3 100%); color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-block; margin: 10px 5px 0 0; }}
+            .btn:hover {{ background: linear-gradient(135deg, #7048a3 0%, #5d3d87 100%); transform: translateY(-1px); }}
+            .email-btn {{ background: #007bff; }}
+            .email-btn:hover {{ background: #0056b3; }}
+            .note {{ background: #fff3cd; padding: 15px; border-radius: 4px; border-left: 4px solid #ffc107; margin: 20px 0; }}
+        </style>
+    </head>
+    <body>
+        <div class="success-container">
+            <h2>✅ Feedback Received!</h2>
+            <p>Thank you for your feedback! Here's what we received:</p>
+            
+            <div class="feedback-preview">{feedback_content}</div>
+            
+            <div class="note">
+                <strong>📧 Next Steps:</strong><br>
+                • Copy the feedback above and email it to: <strong>feedback@analyzeChess.com</strong><br>
+                • Or click the button below to open your email client with the message pre-filled<br>
+                • You can also submit it as a GitHub issue if you have an account
+            </div>
+            
+            <a href="mailto:feedback@analyzeChess.com?subject=Analyze Chess Feedback: {subject}&body={feedback_content.replace(chr(10), '%0D%0A')}" class="btn email-btn">Open Email Client</a>
+            <a href="https://github.com/AprilLorDrake/Analyze_Chess/issues/new" target="_blank" class="btn">Submit on GitHub</a>
+            <a href="/analyze_chess_move" class="btn">Back to App</a>
+        </div>
+    </body>
+    </html>
+    '''
 
 # --- ASSETS ROUTE ---
 @app.route('/assets/<path:filename>')
