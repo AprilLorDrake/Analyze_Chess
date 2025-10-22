@@ -69,8 +69,16 @@ For convenient desktop access, create a shortcut:
 
 1. **Automatic shortcut creation** (PowerShell):
    ```powershell
+   # Run the provided script that auto-detects correct Desktop path
+   .\create_shortcut.ps1
+   ```
+   
+   Or manually with dynamic path detection:
+   ```powershell
+   # Auto-detect Desktop path (handles OneDrive redirection)
+   $DesktopPath = (Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" Desktop).Desktop
    $WshShell = New-Object -comObject WScript.Shell
-   $Shortcut = $WshShell.CreateShortcut("$env:USERPROFILE\Desktop\Analyze Chess.lnk")
+   $Shortcut = $WshShell.CreateShortcut("$DesktopPath\Analyze Chess.lnk")
    $Shortcut.TargetPath = "C:\Projects\Analyze_Chess\launch_analyze_chess.bat"
    $Shortcut.IconLocation = "C:\Projects\Analyze_Chess\assets\chess_icon.ico"
    $Shortcut.WorkingDirectory = "C:\Projects\Analyze_Chess"

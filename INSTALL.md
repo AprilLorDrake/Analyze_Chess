@@ -40,10 +40,18 @@
 
 Create a convenient desktop shortcut for one-click access:
 
-**Option A: PowerShell Command** (Recommended)
+**Option A: PowerShell Script** (Recommended)
 ```powershell
+# Run the provided script that auto-detects correct Desktop path
+.\create_shortcut.ps1
+```
+
+**Option B: Manual PowerShell Command** 
+```powershell
+# Auto-detect Desktop path (handles OneDrive redirection)
+$DesktopPath = (Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" Desktop).Desktop
 $WshShell = New-Object -comObject WScript.Shell
-$Shortcut = $WshShell.CreateShortcut("$env:USERPROFILE\Desktop\Analyze Chess.lnk")
+$Shortcut = $WshShell.CreateShortcut("$DesktopPath\Analyze Chess.lnk")
 $Shortcut.TargetPath = "C:\Projects\Analyze_Chess\launch_analyze_chess.bat"
 $Shortcut.IconLocation = "C:\Projects\Analyze_Chess\assets\chess_icon.ico"
 $Shortcut.WorkingDirectory = "C:\Projects\Analyze_Chess"
@@ -51,7 +59,7 @@ $Shortcut.Save()
 Write-Host "Desktop shortcut created successfully!"
 ```
 
-**Option B: Manual Creation**
+**Option C: Manual Creation**
 1. Right-click desktop → New → Shortcut
 2. Browse to: `C:\Projects\Analyze_Chess\launch_analyze_chess.bat`
 3. Name: "Analyze Chess"

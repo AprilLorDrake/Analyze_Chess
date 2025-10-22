@@ -216,6 +216,55 @@ def get_python_dependencies_info():
     
     return dep_list
 
+def get_application_version_info():
+    """Get current application version and check for updates from GitHub releases."""
+    try:
+        import requests
+        requests_available = True
+    except ImportError:
+        requests_available = False
+    
+    # Current version - we'll read this from a version file or git tag
+    current_version = "v1.1.3"  # This should be updated with each release
+    
+    # Try to get current version from git tag if possible
+    try:
+        import subprocess
+        result = subprocess.run(['git', 'describe', '--tags', '--exact-match'], 
+                              capture_output=True, text=True, cwd=os.path.dirname(__file__))
+        if result.returncode == 0:
+            current_version = result.stdout.strip()
+    except:
+        pass  # Fall back to hardcoded version
+    
+    latest_version = "Unknown"
+    update_available = False
+    
+    if requests_available:
+        try:
+            # Check GitHub releases for latest version
+            url = "https://api.github.com/repos/AprilLorDrake/Analyze_Chess/releases/latest"
+            headers = {"Accept": "application/vnd.github+json", "User-Agent": "analyze-chess-app"}
+            response = requests.get(url, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                latest_version = data['tag_name']
+                update_available = current_version != latest_version
+            else:
+                latest_version = "Check failed"
+        except Exception:
+            latest_version = "Check failed"
+    else:
+        latest_version = "requests not available"
+    
+    return {
+        'current': current_version,
+        'latest': latest_version,
+        'update_available': update_available,
+        'release_url': f"https://github.com/AprilLorDrake/Analyze_Chess/releases/tag/{latest_version}" if latest_version not in ["Unknown", "Check failed", "requests not available"] else None
+    }
+
 def find_stockfish():
     """Attempt to locate a Stockfish executable.
 
@@ -405,6 +454,9 @@ def analyze_chess_move():
     
     # Get Python dependencies information
     python_deps = get_python_dependencies_info()
+    
+    # Get application version information
+    app_version_info = get_application_version_info()
     
     msg = request.args.get('msg', '')
     current_fen = request.args.get('current_fen', '')
@@ -864,6 +916,25 @@ def analyze_chess_move():
                     <h3>About</h3>
                     <h4 style="color: #4a2c7a; margin-bottom: 20px; text-align: center; border-bottom: 2px solid #8e44ad; padding-bottom: 10px;">Component Management</h4>
                     
+                    <!-- Application Version Section -->
+                    <div style="margin-bottom: 25px; padding: 15px; background-color: rgba(142, 68, 173, 0.05); border: 1px solid #d4b3ff; border-radius: 8px;">
+                        <h4 style="color: #4a2c7a; margin-bottom: 15px; display: flex; align-items: center;">
+                            <span style="font-size: 20px; margin-right: 10px;">🚀</span>Chess Analysis Application
+                        </h4>
+                        <div style="margin-bottom: 10px;"><strong>Current Version:</strong> {{ app_version_info.current }}</div>
+                        <div style="margin-bottom: 10px;"><strong>Latest Available:</strong> {{ app_version_info.latest }}</div>
+                        <div style="margin-bottom: 15px;"><strong>Status:</strong> 
+                            <span style="color:{% if app_version_info.update_available %}orange{% else %}green{% endif %};font-weight:bold;">
+                                {% if app_version_info.update_available %}Update Available ({{ app_version_info.latest }}){% else %}Up to Date{% endif %}
+                            </span>
+                        </div>
+                        {% if app_version_info.update_available and app_version_info.release_url %}
+                        <div class="engine-buttons">
+                            <a href="{{ app_version_info.release_url }}" target="_blank" class="engine-btn" style="text-decoration: none; display: inline-block; color: white;">View Update</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
                     <!-- Stockfish Engine Section -->
                     <div style="margin-bottom: 25px; padding: 15px; background-color: rgba(142, 68, 173, 0.05); border: 1px solid #d4b3ff; border-radius: 8px;">
                         <h4 style="color: #4a2c7a; margin-bottom: 15px; display: flex; align-items: center;">
@@ -932,7 +1003,7 @@ def analyze_chess_move():
                   </div>
               </body>
               </html>
-        ''', current=current, version=version, latest_tag=latest_tag, stockfish_update_available=stockfish_update_available, python_deps=python_deps, msg=msg, fen_result=fen_result, current_fen=current_fen, has_previous_engine=has_previous_engine, has_previous_package=has_previous_package)
+        ''', current=current, version=version, latest_tag=latest_tag, stockfish_update_available=stockfish_update_available, python_deps=python_deps, app_version_info=app_version_info, msg=msg, fen_result=fen_result, current_fen=current_fen, has_previous_engine=has_previous_engine, has_previous_package=has_previous_package)
 
 @app.route('/submit', methods=['POST'])
 def submit():
