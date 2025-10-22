@@ -548,6 +548,27 @@ def analyze_chess_move():
                         transform: none;
                         box-shadow: none;
                     }
+                    .submit-btn.analyzed {
+                        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+                        cursor: not-allowed;
+                        opacity: 0.6;
+                        transform: none;
+                        box-shadow: none;
+                    }
+                    .submit-btn.analyzed:hover {
+                        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+                        transform: none;
+                        box-shadow: none;
+                    }
+                    .reset-btn.active { 
+                        background: linear-gradient(135deg, #28a745 0%, #20c997 100%); 
+                        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+                    }
+                    .reset-btn.active:hover { 
+                        background: linear-gradient(135deg, #218838 0%, #1ea085 100%); 
+                        transform: translateY(-1px);
+                        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+                    }
                     .engine-buttons { 
                         display: flex; 
                         gap: 10px; 
@@ -723,6 +744,19 @@ def analyze_chess_move():
                         }
                     }
                     
+                    function setAnalyzedState() {
+                        const submitBtn = document.getElementById('submit-btn');
+                        const resetBtn = document.querySelector('.reset-btn');
+                        
+                        // Make analyze button grey and disabled
+                        submitBtn.classList.add('analyzed');
+                        submitBtn.disabled = true;
+                        submitBtn.title = 'Analysis completed';
+                        
+                        // Make reset button green and active
+                        resetBtn.classList.add('active');
+                    }
+                    
                     // Initialize button state and add event listener when page loads
                     document.addEventListener('DOMContentLoaded', function() {
                         const fenInput = document.getElementById('fen');
@@ -735,6 +769,11 @@ def analyze_chess_move():
                             // Small delay to allow paste to complete
                             setTimeout(validateFENInput, 10);
                         });
+                        
+                        // Check if we're showing analysis results and set button states accordingly
+                        {% if fen_result %}
+                        setAnalyzedState();
+                        {% endif %}
                     });
                 </script>
 
