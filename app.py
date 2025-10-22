@@ -91,17 +91,18 @@ def board_to_html(board, highlight_move=None):
     return ''.join(html)
 
 def generate_fallback_recommendation(board):
-    """Generate a simple AI recommendation based on chess principles."""
+    """Generate a simple AI recommendation based on chess principles with explanations."""
     try:
         legal_moves = list(board.legal_moves)
         if not legal_moves:
-            return "No legal moves available", ""
+            return "No legal moves available", "", "No legal moves in this position."
         
         # Simple scoring system for moves
         scored_moves = []
         
         for move in legal_moves:
             score = 0
+            reasons = []
             
             # Make the move temporarily to evaluate
             board.push(move)
@@ -111,36 +112,99 @@ def generate_fallback_recommendation(board):
             captured_piece = board.piece_at(move.to_square)
             if captured_piece:
                 piece_values = {'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9, 'k': 0}
-                score += piece_values.get(captured_piece.symbol().lower(), 0) * 10
+                piece_value = piece_values.get(captured_piece.symbol().lower(), 0)
+                score += piece_value * 10
+                piece_names = {'p': 'pawn', 'n': 'knight', 'b': 'bishop', 'r': 'rook', 'q': 'queen', 'k': 'king'}
+                reasons.append(f"captures {piece_names.get(captured_piece.symbol().lower(), 'piece')} (+{piece_value} material)")
             
             # 2. Check is good
             if board.is_check():
                 score += 5
+                reasons.append("gives check")
             
             # 3. Checkmate is best
             if board.is_checkmate():
                 score += 1000
+                reasons.append("delivers checkmate!")
                 
             # 4. Center control (e4, e5, d4, d5)
             center_squares = [chess.E4, chess.E5, chess.D4, chess.D5]
             if move.to_square in center_squares:
                 score += 2
+                reasons.append("controls center")
                 
             # 5. Avoid putting pieces in danger (simple check)
             if board.is_attacked_by(not board.turn, move.to_square):
                 score -= 3
+                reasons.append("piece may be in danger")
             
             board.pop()  # Undo the move
-            scored_moves.append((move, score))
+            scored_moves.append((move, score, reasons))
         
         # Sort by score and pick the best
         scored_moves.sort(key=lambda x: x[1], reverse=True)
-        best_move = scored_moves[0][0]
+        best_move, best_score, best_reasons = scored_moves[0]
         
-        return f"{best_move}", board_to_html(board, best_move)
+        # Create explanation
+        if best_reasons:
+            explanation = f"This move {', '.join(best_reasons)}."
+        else:
+            explanation = "This move follows basic chess principles."
+        
+        return f"{best_move}", board_to_html(board, best_move), explanation
         
     except Exception as e:
-        return f"Analysis failed: {e}", ""
+        return f"Analysis failed: {e}", "", "Analysis error occurred."
+
+def get_stockfish_explanation(move_str, board):
+    """Generate explanation for Stockfish recommendation."""
+    try:
+        if move_str in ["No legal moves available", "Engine not available"] or "failed" in move_str.lower():
+            return "Analysis could not be completed."
+        
+        # Parse the move
+        try:
+            move = chess.Move.from_uci(move_str)
+        except:
+            return "Professional engine recommendation."
+        
+        explanations = []
+        
+        # Check what this move does
+        board_copy = board.copy()
+        captured_piece = board_copy.piece_at(move.to_square)
+        
+        if captured_piece:
+            piece_names = {'p': 'pawn', 'n': 'knight', 'b': 'bishop', 'r': 'rook', 'q': 'queen', 'k': 'king'}
+            piece_name = piece_names.get(captured_piece.symbol().lower(), 'piece')
+            explanations.append(f"captures {piece_name}")
+        
+        # Make the move to check resulting position
+        board_copy.push(move)
+        
+        if board_copy.is_checkmate():
+            explanations.append("delivers checkmate")
+        elif board_copy.is_check():
+            explanations.append("gives check")
+        
+        # Check for special moves
+        if board.is_castling(move):
+            explanations.append("castles for king safety")
+        elif board.is_en_passant(move):
+            explanations.append("captures en passant")
+        
+        # Center control
+        center_squares = [chess.E4, chess.E5, chess.D4, chess.D5]
+        if move.to_square in center_squares:
+            explanations.append("controls center")
+        
+        if explanations:
+            return f"Stockfish recommends this move because it {', '.join(explanations)}."
+        else:
+            return "Stockfish evaluates this as the strongest move in the position."
+        
+    except Exception:
+        return "Professional engine recommendation based on deep analysis."
 
 def get_python_dependencies_info():
     """Get version information for all Python dependencies."""
@@ -485,19 +549,27 @@ def analyze_chess_move():
                     stockfish_move = f"Engine error: {e}"
                     stockfish_board = board_to_html(board)
             # Fallback AI recommendation - simple chess logic
-            fallback_ai, ai_board = generate_fallback_recommendation(board)
+            fallback_ai, ai_board, ai_explanation = generate_fallback_recommendation(board)
+            
+            # Create Stockfish explanation based on the move type
+            stockfish_explanation = get_stockfish_explanation(stockfish_move, board)
+            
             fen_result = {
                 'stockfish': stockfish_move, 
                 'stockfish_board': stockfish_board,
+                'stockfish_explanation': stockfish_explanation,
                 'ai': fallback_ai,
-                'ai_board': ai_board
+                'ai_board': ai_board,
+                'ai_explanation': ai_explanation
             }
         except Exception as e:
             fen_result = {
                 'stockfish': f"Invalid FEN: {e}", 
                 'stockfish_board': "",
+                'stockfish_explanation': "Analysis could not be completed due to invalid position.",
                 'ai': "-",
-                'ai_board': ""
+                'ai_board': "",
+                'ai_explanation': "Analysis could not be completed due to invalid position."
             }
     
     return render_template_string('''
@@ -561,6 +633,18 @@ def analyze_chess_move():
                         background: linear-gradient(135deg, #5a6268 0%, #495057 100%); 
                         transform: translateY(-1px);
                         box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+                    }
+                    .reset-btn:disabled {
+                        background: linear-gradient(135deg, #cccccc 0%, #999999 100%);
+                        cursor: not-allowed;
+                        opacity: 0.5;
+                        transform: none;
+                        box-shadow: none;
+                    }
+                    .reset-btn:disabled:hover {
+                        background: linear-gradient(135deg, #cccccc 0%, #999999 100%);
+                        transform: none;
+                        box-shadow: none;
                     }
                     .sample-fens {
                         margin: 15px 0;
@@ -780,19 +864,32 @@ def analyze_chess_move():
                     }
                     
                     function resetForm() {
+                        const resetBtn = document.querySelector('.reset-btn');
+                        if (resetBtn.disabled) {
+                            return; // Don't reset if button is disabled
+                        }
                         window.location.href = '/';
                     }
                     
                     function validateFENInput() {
                         const fenInput = document.getElementById('fen');
                         const submitBtn = document.getElementById('submit-btn');
+                        const resetBtn = document.querySelector('.reset-btn');
                         
                         if (fenInput.value.trim() === '') {
                             submitBtn.disabled = true;
                             submitBtn.title = 'Please enter a FEN position to analyze';
+                            resetBtn.disabled = true;
+                            resetBtn.style.opacity = '0.5';
+                            resetBtn.style.cursor = 'not-allowed';
+                            resetBtn.title = 'Enter a FEN position first';
                         } else {
                             submitBtn.disabled = false;
                             submitBtn.title = 'Click to analyze the chess position';
+                            resetBtn.disabled = false;
+                            resetBtn.style.opacity = '1';
+                            resetBtn.style.cursor = 'pointer';
+                            resetBtn.title = 'Clear the FEN input';
                         }
                     }
                     
@@ -898,6 +995,11 @@ def analyze_chess_move():
                     <div class="recommendation-section">
                         <div class="recommend-label">Stockfish Recommendation:</div>
                         <div class="recommend-value">{{fen_result['stockfish']}}</div>
+                        {% if fen_result['stockfish_explanation'] %}
+                        <div style="font-size: 13px; color: #c8e6c8; margin-top: 8px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; border-left: 3px solid #28a745;">
+                            <strong>Why this move:</strong> {{fen_result['stockfish_explanation']}}
+                        </div>
+                        {% endif %}
                         {% if fen_result['stockfish_board'] %}
                         <div class="board-container">
                             {{fen_result['stockfish_board']|safe}}
@@ -908,6 +1010,11 @@ def analyze_chess_move():
                     <div class="recommendation-section">
                         <div class="recommend-label">AI Recommendation (Built-in Chess Logic Engine):</div>
                         <div class="recommend-value">{{fen_result['ai']}}</div>
+                        {% if fen_result['ai_explanation'] %}
+                        <div style="font-size: 13px; color: #d4b3ff; margin-top: 8px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; border-left: 3px solid #8e44ad;">
+                            <strong>Why this move:</strong> {{fen_result['ai_explanation']}}
+                        </div>
+                        {% endif %}
                         {% if fen_result['ai_board'] %}
                         <div class="board-container">
                             {{fen_result['ai_board']|safe}}
