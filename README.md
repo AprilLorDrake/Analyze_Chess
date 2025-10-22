@@ -8,8 +8,9 @@ A comprehensive chess analysis tool powered by Stockfish engine with built-in AI
 - **Stockfish Engine Integration**: Professional-grade chess engine analysis
 - **AI Move Recommendations**: Built-in custom chess logic AI for alternative move suggestions
 - **Visual Chess Boards**: Interactive HTML chess board visualization
+- **Smart UI Controls**: Intuitive button states guide workflow (green for active actions, grey for completed)
 - **Component Management**: Individual dependency tracking and update management
-- **Modern UI**: Purple-themed responsive web interface
+- **Modern UI**: Purple-themed responsive web interface with enhanced user experience
 
 ## What is FEN?
 
@@ -91,10 +92,14 @@ The desktop shortcut will:
 ## Usage
 
 1. Enter a chess position in FEN notation
-2. Click "Analyze Position" to get recommendations
+2. Click "Analyze Position" (green button) to get recommendations
 3. View Stockfish engine analysis and AI suggestions
-4. See visual chess boards showing recommended moves
-5. Manage engine and dependencies in the About section
+4. After analysis completes:
+   - **Analyze button** turns grey (analysis complete)
+   - **Reset button** turns green (ready for next analysis)
+5. Click the green "Reset" button to clear results and start over
+6. See visual chess boards showing recommended moves
+7. Manage engine and dependencies in the About section
 
 ## Technical Details
 
