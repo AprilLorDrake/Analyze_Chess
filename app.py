@@ -224,8 +224,12 @@ def get_application_version_info():
     except ImportError:
         requests_available = False
     
-    # Current version - we'll read this from a version file or git tag
-    current_version = "v1.2.1"  # This should be updated with each release
+    # Current version - read from version.py
+    try:
+        from version import __version__
+        current_version = __version__
+    except ImportError:
+        current_version = "Unknown"
     
     # Try to get current version from git tag if possible
     try:
@@ -235,7 +239,7 @@ def get_application_version_info():
         if result.returncode == 0:
             current_version = result.stdout.strip()
     except:
-        pass  # Fall back to hardcoded version
+        pass  # Fall back to version.py or Unknown
     
     latest_version = "Unknown"
     update_available = False
