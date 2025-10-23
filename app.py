@@ -225,7 +225,7 @@ def get_application_version_info():
         requests_available = False
     
     # Current version - we'll read this from a version file or git tag
-    current_version = "v1.2.0"  # This should be updated with each release
+    current_version = "v1.3.0"  # This should be updated with each release
     
     # Try to get current version from git tag if possible
     try:
