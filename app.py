@@ -774,11 +774,17 @@ def analyze_chess_move():
                  }
                 </style>
                 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    var fenInput = document.getElementById('fen');
+    if (fenInput) {
+        fenInput.onpaste = function(e) {
+            setTimeout(validateFENInput, 10);
+        };
+    }
+});
                     function loadSampleFEN(fen) {
                         var fenInput = document.getElementById('fen');
                         fenInput.value = fen;
-                        fenInput.removeAttribute('readonly');
-                        fenInput.removeAttribute('disabled');
                         fenInput.dispatchEvent(new Event('input', { bubbles: true }));
                         fenInput.focus();
                         setTimeout(validateFENInput, 10);
@@ -930,7 +936,7 @@ def analyze_chess_move():
                     <form action="/submit" method="post">
                         <div style="margin-bottom: 15px;">
                             <label for="fen" style="display: block; margin-bottom: 8px; font-weight: bold; font-size: 18px;">Enter FEN Position:</label>
-                            <input type="text" name="fen" id="fen" class="fen-input{% if fen_result %} analyzed{% endif %}" placeholder="Enter FEN notation here..." value="{{current_fen}}" autocomplete="off">
+                            <input type="text" name="fen" id="fen" class="fen-input{% if fen_result %} analyzed{% endif %}" placeholder="Enter FEN notation here..." value="{{current_fen}}" autocomplete="off" oninput="validateFENInput()">
                             <div style="font-size: 11px; color: #6a5d7a; margin-top: 5px; font-style: italic;">
                                 FEN (Forsyth-Edwards Notation) describes a chess position: piece placement, turn, castling rights, en passant, and move counts
                             </div>
@@ -1296,23 +1302,25 @@ if __name__ == "__main__":
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.exe') as tmp:
                             tmp.write(src.read())
                             tmp_path = tmp.name
-                    try:
-                        os.replace(tmp_path, target_path)
-                    except Exception:
-                        with open(tmp_path, 'rb') as srcf, open(target_path, 'wb') as dstf:
-                            dstf.write(srcf.read())
-                        try:
-                            os.remove(tmp_path)
-                        except Exception:
-                            pass
+            try:
+                os.replace(tmp_path, target_path)
+            except Exception:
+                with open(tmp_path, 'rb') as srcf, open(target_path, 'wb') as dstf:
+                    dstf.write(srcf.read())
                 try:
-                    os.chmod(target_path, 0o755)
+                    os.remove(tmp_path)
                 except Exception:
                     pass
-                return target_path if os.path.isfile(target_path) else None
-            except Exception as e:
-                print(f"Stockfish install failed: {e}")
-                return None
+        try:
+            os.chmod(target_path, 0o755)
+        except Exception:
+            pass
+        # persist selection
+        _write_text(paths['selected'], target_path)
+        return target_path if os.path.isfile(target_path) else None
+    except Exception as e:
+        print(f"Stockfish install failed: {e}")
+        return None
 
         if sys.stdin and sys.stdin.isatty():
             resp = input("Stockfish engine not found. Download and install Stockfish into './bin'? [Y/n]: ").strip().lower()
