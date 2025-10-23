@@ -216,6 +216,16 @@ def get_python_dependencies_info():
     
     return dep_list
 
+def version_greater(v1, v2):
+    """Compare two version strings, return True if v1 > v2."""
+    def parse_version(v):
+        v = v.lstrip('v').split('.')
+        return tuple(int(x) for x in v)
+    try:
+        return parse_version(v1) > parse_version(v2)
+    except:
+        return False
+
 def get_application_version_info():
     """Get current application version and check for updates from GitHub releases."""
     try:
@@ -254,7 +264,8 @@ def get_application_version_info():
             if response.status_code == 200:
                 data = response.json()
                 latest_version = data['tag_name']
-                update_available = current_version != latest_version
+                # Compare versions: only update if latest > current
+                update_available = version_greater(latest_version, current_version)
             else:
                 latest_version = "Check failed"
         except Exception:
