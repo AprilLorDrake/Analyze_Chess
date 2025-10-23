@@ -1302,25 +1302,25 @@ if __name__ == "__main__":
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.exe') as tmp:
                             tmp.write(src.read())
                             tmp_path = tmp.name
-            try:
-                os.replace(tmp_path, target_path)
-            except Exception:
-                with open(tmp_path, 'rb') as srcf, open(target_path, 'wb') as dstf:
-                    dstf.write(srcf.read())
                 try:
-                    os.remove(tmp_path)
+                    os.replace(tmp_path, target_path)
+                except Exception:
+                    with open(tmp_path, 'rb') as srcf, open(target_path, 'wb') as dstf:
+                        dstf.write(srcf.read())
+                    try:
+                        os.remove(tmp_path)
+                    except Exception:
+                        pass
+                try:
+                    os.chmod(target_path, 0o755)
                 except Exception:
                     pass
-        try:
-            os.chmod(target_path, 0o755)
-        except Exception:
-            pass
-        # persist selection
-        _write_text(paths['selected'], target_path)
-        return target_path if os.path.isfile(target_path) else None
-    except Exception as e:
-        print(f"Stockfish install failed: {e}")
-        return None
+                # persist selection
+                _write_text(paths['selected'], target_path)
+                return target_path if os.path.isfile(target_path) else None
+            except Exception as e:
+                print(f"Stockfish install failed: {e}")
+                return None
 
         if sys.stdin and sys.stdin.isatty():
             resp = input("Stockfish engine not found. Download and install Stockfish into './bin'? [Y/n]: ").strip().lower()
