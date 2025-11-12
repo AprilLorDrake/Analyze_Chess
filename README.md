@@ -1,6 +1,7 @@
-# Chess Analysis Web Application
 
-A comprehensive chess analysis tool powered by Stockfish engine with built-in AI recommendations and dependency management.
+# Chess Analysis Web Application (v1.2.2)
+
+A comprehensive chess analysis tool powered by Stockfish engine with built-in AI recommendations and dependency management. Now updated to version 1.2.2 with improved reliability and launch scripts.
 
 ## Features
 
@@ -55,7 +56,7 @@ Individual dependency management with version tracking and update controls for S
    ```
 3. Install dependencies:
    ```bash
-   pip install -r assets/requirements.txt
+   pip install -r requirements.txt
    ```
 4. Run the application:
    ```bash
@@ -65,7 +66,7 @@ Individual dependency management with version tracking and update controls for S
 
 ### Desktop Integration (Windows)
 
-For convenient desktop access, create a shortcut:
+For convenient desktop access, use the included launch script or create a shortcut:
 
 1. **Automatic shortcut creation** (PowerShell):
    ```powershell
@@ -92,6 +93,7 @@ For convenient desktop access, create a shortcut:
    - Change icon to `assets\chess_icon.ico`
 
 The desktop shortcut will:
+- Kill any running Python processes
 - Activate the Python virtual environment
 - Start the Flask application
 - Automatically open your default browser
