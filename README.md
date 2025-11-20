@@ -1,7 +1,7 @@
 
-# Chess Analysis Web Application (v1.2.2)
+# Chess Analysis Web Application (v1.2.4)
 
-A comprehensive chess analysis tool powered by Stockfish engine with built-in AI recommendations and dependency management. Now updated to version 1.2.2 with improved reliability and launch scripts.
+A comprehensive chess analysis tool powered by Stockfish engine with built-in AI recommendations and dependency management. Now updated to version 1.2.4 with Python 3.14 support, enhanced UI, and auto-analysis features.
 
 ## Features
 
@@ -43,7 +43,8 @@ Individual dependency management with version tracking and update controls for S
 ## Getting Started
 
 ### Prerequisites
-- Python 3.7+
+- **Python 3.14** (recommended - latest stable version)
+- **Python 3.11+** also supported
 - Virtual environment (recommended)
 
 ### Installation
@@ -114,6 +115,7 @@ The desktop shortcut will:
 ## Technical Details
 
 - **Backend**: Flask web framework
+- **Python Version**: 3.14.0 (latest stable)
 - **Chess Engine**: Stockfish 17.1 (professional chess analysis)
 - **AI Engine**: Custom chess principles evaluation with:
   - Piece capture analysis (material values)
@@ -121,8 +123,26 @@ The desktop shortcut will:
   - Center square control evaluation
   - Basic safety assessment
 - **Frontend**: HTML/CSS with purple gradient theme
-- **Dependencies**: Flask, python-chess, requests
+- **Dependencies**: Flask, python-chess, requests, numpy, opencv-python
 - **Dependency Management**: Real-time version checking with PyPI integration
+
+## Recent Updates (v1.2.4)
+
+### What's New:
+- ✅ **Python 3.14 Support**: Upgraded to latest Python version with all dependencies
+- ✅ **Enhanced Opening Positions**: Replaced "Starting Position" with "London System" for better variety
+- ✅ **Auto-Analysis**: Clicking "Analyze This Position" in modal now auto-submits analysis
+- ✅ **UI Refinements**: Simplified "AI Recommendation" label for cleaner interface
+- ✅ **Updated Dependencies**: 
+  - numpy 2.3.5 (latest)
+  - requests 2.32.5 (latest security updates)
+  - pillow 12.0.0 (latest)
+  - All packages updated to latest stable versions
+
+### Previous Updates:
+- v1.2.3: Modal board expansion for opening positions with full-size visualization
+- v1.2.2: Improved button state management and launch scripts
+- v1.2.1: Component management system with individual update controls
 
 ## AI Analysis Features
 
