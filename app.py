@@ -11,49 +11,10 @@ def is_file_locked(filepath):
         return True
 
 from flask import Flask, request, render_template_string, redirect, url_for, jsonify
-import io
-from PIL import Image
 import chess
 import chess.engine
 
-# Add python-chess-vision to path
-_base_dir = os.path.dirname(os.path.abspath(__file__))
-_pcv_path = os.path.join(_base_dir, 'python-chess-vision')
-if os.path.exists(_pcv_path) and _pcv_path not in sys.path:
-    sys.path.insert(0, _pcv_path)
-
-try:
-    from python_chess_vision import fen_from_image
-except ImportError:
-    fen_from_image = None
-
 app = Flask(__name__)
-
-@app.route('/upload_board_image', methods=['POST'])
-def upload_board_image():
-    """Accepts a PNG chessboard image, returns FEN string."""
-    if not fen_from_image:
-        return jsonify({'error': 'python-chess-vision not installed'}), 500
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image uploaded'}), 400
-    file = request.files['image']
-    try:
-        img = Image.open(file.stream)
-        fen = fen_from_image(img)
-        
-        # Validate if the FEN looks reasonable (not all empty or all same piece)
-        # This is a heuristic to detect if piece recognition failed
-        piece_chars = [c for c in fen.split(' ')[0] if c.isalpha()]
-        if len(piece_chars) < 2:  # Only 1 or 0 pieces detected
-            return jsonify({
-                'warning': 'Could not accurately detect pieces in the image. Piece recognition works best with clear, standard chess board images with good contrast.',
-                'fen': fen,
-                'suggestion': 'For better accuracy, try: (1) Better lighting, (2) Clearer board image, (3) Or enter FEN notation directly above'
-            }), 200
-        
-        return jsonify({'fen': fen})
-    except Exception as e:
-        return jsonify({'error': f'Image processing error: {str(e)}'}), 500
 
 # Path to the Stockfish engine (will be auto-discovered at runtime)
 engine_path = None
@@ -1028,7 +989,7 @@ def analyze_chess_move():
                      transform: translateY(-2px);
                  }
                 </style>
-                <script>
+                {% raw %}<script>
                     function loadSampleFEN(fen) {
                         const fenInput = document.getElementById('fen');
                         const submitBtn = document.getElementById('submit-btn');
@@ -1089,7 +1050,7 @@ def analyze_chess_move():
                             
                             let fileIdx = 0;
                             for (let char of rank) {
-                                if (/\d/.test(char)) {
+                                if (/\\d/.test(char)) {{
                                     // Empty squares
                                     for (let i = 0; i < parseInt(char); i++) {
                                         const isLight = (rankIdx + fileIdx) % 2 === 0;
@@ -1179,7 +1140,7 @@ def analyze_chess_move():
                         ranks.forEach((rank, rankIdx) => {
                             let fileIdx = 0;
                             for (let char of rank) {
-                                if (/\d/.test(char)) {
+                                if (/\\d/.test(char)) {
                                     // Empty squares
                                     for (let i = 0; i < parseInt(char); i++) {
                                         const bgColor = (rankIdx + fileIdx) % 2 === 0 ? '#f0e6d2' : '#b58863';
@@ -1230,80 +1191,7 @@ def analyze_chess_move():
                         resetBtn.classList.add('active');
                     }
                     
-                    function uploadBoardImage() {
-                        const fileInput = document.getElementById('board_image');
-                        const statusSpan = document.getElementById('upload-status');
-                        const fenInput = document.getElementById('fen');
-                        if (!fileInput.files || fileInput.files.length === 0) {
-                            statusSpan.textContent = 'Please select a PNG image.';
-                            return;
-                        }
-                        const file = fileInput.files[0];
-                        statusSpan.textContent = 'Processing image...';
-                        const formData = new FormData();
-                        formData.append('image', file);
-                        fetch('/upload_board_image', {
-                            method: 'POST',
-                            body: formData
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.fen) {
-                                fenInput.value = data.fen;
-                                // Force button update with small delay to ensure DOM updates
-                                setTimeout(() => {
-                                    validateFENInput();
-                                }, 50);
-                                if (data.warning) {
-                                    statusSpan.textContent = data.warning + ' ' + (data.suggestion || '');
-                                    statusSpan.style.color = '#ff9800';
-                                } else {
-                                    statusSpan.textContent = 'FEN extracted and populated.';
-                                    statusSpan.style.color = '#4a2c7a';
-                                }
-                            } else {
-                                statusSpan.textContent = 'Error: ' + (data.error || 'Unknown error');
-                                statusSpan.style.color = '#d32f2f';
-                            }
-                        })
-                        .catch(err => {
-                            statusSpan.textContent = 'Error: ' + err;
-                            statusSpan.style.color = '#d32f2f';
-                        });
-                    }
-                    
-                    function handleImageDrop(event) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        const files = event.dataTransfer.files;
-                        if (files && files.length > 0) {
-                            const file = files[0];
-                            if (file.type === 'image/png' || file.type === 'image/jpeg' || file.type === 'image/jpg') {
-                                document.getElementById('board_image').files = files;
-                                uploadBoardImage();
-                            } else {
-                                document.getElementById('upload-status').textContent = 'Please drop a PNG or JPG image.';
-                            }
-                        }
-                    }
-                    
-                    // Handle paste events globally
-                    document.addEventListener('paste', function(event) {
-                        const items = event.clipboardData.items;
-                        for (let i = 0; i < items.length; i++) {
-                            if (items[i].type.indexOf('image') !== -1) {
-                                event.preventDefault();
-                                const blob = items[i].getAsFile();
-                                const dt = new DataTransfer();
-                                dt.items.add(blob);
-                                document.getElementById('board_image').files = dt.files;
-                                uploadBoardImage();
-                                break;
-                            }
-                        }
-                    });
-                    
-                    // Function to copy board as image to clipboard
+                    function handleImageDrop(event) {e to clipboard
                     function copyBoardAsImage(boardElementId, boardName) {
                         const boardElement = document.getElementById(boardElementId);
                         if (!boardElement) {
@@ -1370,7 +1258,7 @@ def analyze_chess_move():
                         setAnalyzedState();
                         {% endif %}
                     });
-                </script>
+                </script>{% endraw %}
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
             </head>

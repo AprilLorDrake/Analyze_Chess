@@ -8,7 +8,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="analyze-chess",
-    version="1.2.2",
+    version="1.2.5",
     author="AprilLorDrake",
     author_email="your-email@example.com",
     description="A comprehensive chess position analysis tool using Stockfish engine",
@@ -22,13 +22,11 @@ setup(
         "Topic :: Games/Entertainment :: Board Games",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.12",
     install_requires=requirements,
     entry_points={
         "console_scripts": [

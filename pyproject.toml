@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "analyze-chess"
-version = "1.2.2"
+version = "1.2.5"
 description = "A comprehensive chess position analysis tool using Stockfish engine"
 readme = "README.md"
 license = {text = "MIT"}
@@ -17,13 +17,11 @@ classifiers = [
     "Topic :: Games/Entertainment :: Board Games",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 dependencies = [
     "flask>=2.0.0",
     "python-chess>=1.999",
