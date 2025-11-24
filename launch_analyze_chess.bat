@@ -1,3 +1,7 @@
 @echo off
-REM Launch Analyze_Chess using PowerShell for robust process management
-powershell -ExecutionPolicy Bypass -File "%~dp0launch_analyze_chess.ps1"
+REM Launch Analyze_Chess Flask app
+cd /d "%~dp0"
+call venv\Scripts\activate.bat
+start http://127.0.0.1:5000
+python app.py
+pause
