@@ -123,21 +123,18 @@ The desktop shortcut will:
   - Center square control evaluation
   - Basic safety assessment
 - **Frontend**: HTML/CSS with purple gradient theme
-- **Dependencies**: Flask, python-chess, requests, numpy, opencv-python
+- **Dependencies**: Flask, python-chess, requests, stockfish
 - **Dependency Management**: Real-time version checking with PyPI integration
 
 ## Recent Updates (v1.2.4)
 
 ### What's New:
-- ✅ **Python 3.14 Support**: Upgraded to latest Python version with all dependencies
+- ✅ **Python 3.14 Support**: Upgraded to latest Python version
 - ✅ **Enhanced Opening Positions**: Replaced "Starting Position" with "London System" for better variety
 - ✅ **Auto-Analysis**: Clicking "Analyze This Position" in modal now auto-submits analysis
 - ✅ **UI Refinements**: Simplified "AI Recommendation" label for cleaner interface
-- ✅ **Updated Dependencies**: 
-  - numpy 2.3.5 (latest)
-  - requests 2.32.5 (latest security updates)
-  - pillow 12.0.0 (latest)
-  - All packages updated to latest stable versions
+- ✅ **Streamlined Dependencies**: Removed image processing dependencies for better compatibility
+- ✅ **Updated Dependencies**: requests 2.32.5 (latest security updates)
 
 ### Previous Updates:
 - v1.2.3: Modal board expansion for opening positions with full-size visualization
