@@ -1,7 +1,7 @@
 
-# Chess Analysis Web Application (v1.2.5)
+# Chess Analysis Web Application (v1.3.0)
 
-A comprehensive chess analysis tool powered by Stockfish engine with built-in AI recommendations and dependency management. Now updated to version 1.2.5 with Python 3.14 support, streamlined dependencies, and enhanced UI.
+A comprehensive chess analysis tool powered by Stockfish engine with built-in AI recommendations and dependency management. Now updated to version 1.3.0 with Python 3.14 support, streamlined dependencies, and no external image processing dependencies.
 
 ## Features
 
@@ -126,17 +126,18 @@ The desktop shortcut will:
 - **Dependencies**: Flask, python-chess, requests, stockfish
 - **Dependency Management**: Real-time version checking with PyPI integration
 
-## Recent Updates (v1.2.4)
+## Recent Updates (v1.3.0)
 
 ### What's New:
-- ✅ **Python 3.14 Support**: Upgraded to latest Python version
-- ✅ **Enhanced Opening Positions**: Replaced "Starting Position" with "London System" for better variety
-- ✅ **Auto-Analysis**: Clicking "Analyze This Position" in modal now auto-submits analysis
-- ✅ **UI Refinements**: Simplified "AI Recommendation" label for cleaner interface
-- ✅ **Streamlined Dependencies**: Removed image processing dependencies for better compatibility
-- ✅ **Updated Dependencies**: requests 2.32.5 (latest security updates)
+- ✅ **Removed Image Upload**: Eliminated all image upload/paste functionality for cleaner, more focused tool
+- ✅ **Zero Image Dependencies**: Removed PIL/Pillow, opencv-python, numpy dependencies
+- ✅ **Performance Improvements**: Faster startup and reduced memory footprint
+- ✅ **Python 3.14 Ready**: Full support for Python 3.12, 3.13, and 3.14
+- ✅ **Cleaner Codebase**: Removed 144 lines of unused image processing code
 
 ### Previous Updates:
+- v1.2.5: Fixed CI build by removing conflicting dependencies
+- v1.2.4: Python 3.14 support, enhanced opening positions, auto-analysis
 - v1.2.3: Modal board expansion for opening positions with full-size visualization
 - v1.2.2: Improved button state management and launch scripts
 - v1.2.1: Component management system with individual update controls
