@@ -3,18 +3,17 @@
 ## Method 1: Direct Installation from GitHub
 
 ### Prerequisites
-- Python 3.8 or higher
+- **Python 3.11** (Python 3.12+ not yet supported)
 - Git
 
 ### Steps
 1. Clone the repository:
-   `ash
+   ```bash
    git clone https://github.com/AprilLorDrake/Analyze_Chess.git
    cd Analyze_Chess
-   `
-
-2. Create virtual environment:
-   `ash
+   ```
+2. Create and activate a virtual environment:
+   ```bash
    python -m venv venv
    
    # Windows
@@ -22,78 +21,68 @@
    
    # macOS/Linux
    source venv/bin/activate
-   `
-
+   ```
 3. Install dependencies:
-   `ash
+   ```bash
    pip install -r requirements.txt
-   `
-
+   ```
 4. Run the application:
-   `ash
+   ```bash
    python app.py
-   `
-
-5. Open browser to: http://localhost:5000
+   ```
+5. Open your browser to http://localhost:5000
 
 ### Optional: Desktop Shortcut (Windows)
+Create a convenient desktop shortcut for one-click access.
 
-Create a convenient desktop shortcut for one-click access:
-
-**Option A: PowerShell Script** (Recommended)
+**Option A: PowerShell Script (recommended)**
 ```powershell
-# Run the provided script that auto-detects correct Desktop path
 .\create_shortcut.ps1
 ```
 
-**Option B: Manual PowerShell Command** 
+**Option B: Manual PowerShell command**
 ```powershell
-# Auto-detect Desktop path (handles OneDrive redirection)
 $DesktopPath = (Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" Desktop).Desktop
-$WshShell = New-Object -comObject WScript.Shell
+$WshShell = New-Object -ComObject WScript.Shell
 $Shortcut = $WshShell.CreateShortcut("$DesktopPath\Analyze Chess.lnk")
 $Shortcut.TargetPath = "C:\Projects\Analyze_Chess\launch_analyze_chess.bat"
 $Shortcut.IconLocation = "C:\Projects\Analyze_Chess\assets\chess_icon.ico"
 $Shortcut.WorkingDirectory = "C:\Projects\Analyze_Chess"
 $Shortcut.Save()
-Write-Host "Desktop shortcut created successfully!"
 ```
 
-**Option C: Manual Creation**
-1. Right-click desktop → New → Shortcut
-2. Browse to: `C:\Projects\Analyze_Chess\launch_analyze_chess.bat`
-3. Name: "Analyze Chess"
-4. Right-click shortcut → Properties → Change Icon
-5. Browse to: `C:\Projects\Analyze_Chess\assets\chess_icon.ico`
+**Option C: Manual creation**
+1. Right-click the desktop → New → Shortcut
+2. Point to `C:\Projects\Analyze_Chess\launch_analyze_chess.bat`
+3. Name it "Analyze Chess"
+4. Right-click the shortcut → Properties → Change Icon
+5. Select `C:\Projects\Analyze_Chess\assets\chess_icon.ico`
 
-**Features of the desktop launcher:**
-- Automatic virtual environment activation
-- Professional startup sequence with progress indicators
-- Auto-opens browser to the chess analysis page
-- Proper error handling and user feedback
-- Custom chess piece icon
+**Launcher perks**
+- Activates the virtual environment automatically
+- Provides a professional startup experience
+- Opens the browser to the chess analysis page
+- Displays clear error handling
+- Uses the custom chess icon
 
 ## Method 2: Python Package Installation (Coming Soon)
-
-Once published to GitHub Packages:
-
-`ash
+These commands will work once the package is published:
+```bash
 pip install --index-url https://pypi.org/simple/ analyze-chess
 analyze-chess
-`
+```
 
 ## Method 3: Docker Container
 
 ### Prerequisites
-- Docker installed
+- Docker Desktop (Windows/macOS) or Docker Engine (Linux)
 
 ### Steps
-1. Pull and run the container:
-   `ash
+1. Run the container:
+   ```bash
    docker run -p 5000:5000 ghcr.io/aprillordrake/analyze_chess:latest
-   `
-
-2. Open browser to: http://localhost:5000
+   ```
+2. Open your browser to http://localhost:5000
 
 ## Method 4: One-Click Deploy
 
@@ -104,26 +93,23 @@ analyze-chess
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/AprilLorDrake/Analyze_Chess)
 
 ## System Requirements
-- **OS**: Windows 10+, macOS 10.14+, Linux (Ubuntu 18.04+)
-- **Python**: 3.8 or higher
-- **Memory**: 512MB RAM minimum, 1GB recommended
-- **Storage**: 100MB free space
-- **Network**: Internet connection for Stockfish updates
+- **OS**: Windows 10+, macOS 10.14+, or Ubuntu 18.04+
+- **Python**: 3.11 (recommended)
+- **Memory**: 1 GB RAM (minimum 512 MB)
+- **Storage**: 100 MB free space
+- **Network**: Internet access for Stockfish updates
 
 ## Troubleshooting
 
-### Common Issues
-1. **Port 5000 already in use**:
-   - Change port in pp.py: pp.run(host='0.0.0.0', port=8000)
-
-2. **Stockfish not found**:
-   - The app will auto-download Stockfish on first run
-   - Or manually place Stockfish binary in in/ directory
-
-3. **Python dependencies error**:
-   - Ensure you're using Python 3.8+
-   - Try: pip install --upgrade pip setuptools wheel
+1. **Port 5000 already in use**
+   - Edit `app.py` and run the server on a different port: `app.run(host="0.0.0.0", port=8000)`
+2. **Stockfish not found**
+   - The app downloads Stockfish automatically on first run.
+   - Alternatively place the Stockfish binary in the `bin/` directory.
+3. **Dependency installation errors**
+   - Verify you are using Python 3.11.
+   - Upgrade tooling: `python -m pip install --upgrade pip setuptools wheel`.
 
 ### Support
--  Report issues: [GitHub Issues](https://github.com/AprilLorDrake/Analyze_Chess/issues)
--  Documentation: [README.md](https://github.com/AprilLorDrake/Analyze_Chess/blob/master/README.md)
+- Report issues: [GitHub Issues](https://github.com/AprilLorDrake/Analyze_Chess/issues)
+- Documentation: [README](https://github.com/AprilLorDrake/Analyze_Chess/blob/master/README.md)

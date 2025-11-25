@@ -989,7 +989,10 @@ def analyze_chess_move():
                      transform: translateY(-2px);
                  }
                 </style>
-                {% raw %}<script>
+                {% raw %}
+                <script>
+                    console.log('=== JavaScript file loaded ===');
+                    
                     function loadSampleFEN(fen) {
                         const fenInput = document.getElementById('fen');
                         const submitBtn = document.getElementById('submit-btn');
@@ -1050,7 +1053,7 @@ def analyze_chess_move():
                             
                             let fileIdx = 0;
                             for (let char of rank) {
-                                if (/\\d/.test(char)) {{
+                                if (/\\d/.test(char)) {
                                     // Empty squares
                                     for (let i = 0; i < parseInt(char); i++) {
                                         const isLight = (rankIdx + fileIdx) % 2 === 0;
@@ -1162,6 +1165,7 @@ def analyze_chess_move():
                     }
                     
                     function resetForm() {
+                        console.log('Reset button clicked!');
                         window.location.href = '/';
                     }
                     
@@ -1169,12 +1173,16 @@ def analyze_chess_move():
                         const fenInput = document.getElementById('fen');
                         const submitBtn = document.getElementById('submit-btn');
                         
+                        console.log('Validating FEN:', fenInput.value);
+                        
                         if (fenInput.value.trim() === '') {
                             submitBtn.disabled = true;
                             submitBtn.title = 'Please enter a FEN position to analyze';
+                            console.log('Button disabled - empty FEN');
                         } else {
                             submitBtn.disabled = false;
                             submitBtn.title = 'Click to analyze the chess position';
+                            console.log('Button enabled - FEN present');
                         }
                     }
                     
@@ -1191,7 +1199,7 @@ def analyze_chess_move():
                         resetBtn.classList.add('active');
                     }
                     
-                    function handleImageDrop(event) {e to clipboard
+                    // Function to copy board as image to clipboard
                     function copyBoardAsImage(boardElementId, boardName) {
                         const boardElement = document.getElementById(boardElementId);
                         if (!boardElement) {
@@ -1242,7 +1250,9 @@ def analyze_chess_move():
                     
                     // Initialize button state and add event listener when page loads
                     document.addEventListener('DOMContentLoaded', function() {
+                        console.log('DOMContentLoaded fired!');
                         const fenInput = document.getElementById('fen');
+                        console.log('FEN input element:', fenInput);
                         validateFENInput(); // Check initial state
                         
                         // Add event listener for real-time validation
@@ -1252,13 +1262,18 @@ def analyze_chess_move():
                             // Small delay to allow paste to complete
                             setTimeout(validateFENInput, 10);
                         });
-                        
-                        // Check if we're showing analysis results and set button states accordingly
-                        {% if fen_result %}
-                        setAnalyzedState();
-                        {% endif %}
                     });
-                </script>{% endraw %}
+                </script>
+                {% endraw %}
+                {% if fen_result %}
+                {% raw %}
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        setAnalyzedState();
+                    });
+                </script>
+                {% endraw %}
+                {% endif %}
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
             </head>

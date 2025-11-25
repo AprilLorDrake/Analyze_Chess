@@ -1,7 +1,7 @@
 
-# Chess Analysis Web Application (v1.3.0)
+# Chess Analysis Web Application (v1.3.1)
 
-A comprehensive chess analysis tool powered by Stockfish engine with built-in AI recommendations and dependency management. Now updated to version 1.3.0 with Python 3.14 support, streamlined dependencies, and no external image processing dependencies.
+A comprehensive chess analysis tool powered by Stockfish engine with built-in AI recommendations and dependency management. Now updated to version 1.3.1 with Python 3.14 support, streamlined dependencies, and no external image processing dependencies.
 
 ## Features
 
@@ -126,7 +126,7 @@ The desktop shortcut will:
 - **Dependencies**: Flask, python-chess, requests, stockfish
 - **Dependency Management**: Real-time version checking with PyPI integration
 
-## Recent Updates (v1.3.0)
+## Recent Updates (v1.3.1)
 
 ### What's New:
 - ✅ **Removed Image Upload**: Eliminated all image upload/paste functionality for cleaner, more focused tool
