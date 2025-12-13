@@ -1,5 +1,15 @@
 # ♟️ Chess Analysis Web Application (v1.3.1)
 
+<p align="center">
+  <a href="assets/chess-banner.png">
+    <img
+      src="assets/chess-banner.png"
+      alt="Wooden chessboard banner with a light king in focus and blurred pieces in the background"
+      width="100%"
+    />
+  </a>
+</p>
+
 ![Last Commit](https://img.shields.io/github/last-commit/AprilLorDrake/Analyze_Chess)
 ![CI](https://img.shields.io/github/actions/workflow/status/AprilLorDrake/Analyze_Chess/publish.yml?branch=master&label=CI)
 ![Repo Size](https://img.shields.io/github/repo-size/AprilLorDrake/Analyze_Chess)
