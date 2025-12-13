@@ -1,9 +1,9 @@
 # ♟️ Chess Analysis Web Application (v1.3.1)
 
 <p align="center">
-  <a href="assets/chess-banner.png">
+  <a href="assets/chess_banner.png">
     <img
-      src="assets/chess-banner.png"
+      src="assets/chess_banner.png"
       alt="Wooden chessboard banner with a light king in focus and blurred pieces in the background"
       width="100%"
     />
