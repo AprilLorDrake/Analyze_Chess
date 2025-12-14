@@ -1,7 +1,7 @@
 
 # Chess Analysis Web Application (v1.3.2)
 
-A comprehensive chess analysis tool powered by Stockfish engine with built-in AI recommendations and dependency management. Version 1.3.2 keeps the Python 3.14-ready stack while cleaning up hard-coded paths and making launcher/docs fully portable.
+A comprehensive chess analysis tool powered by Stockfish engine with built-in AI recommendations and dependency management. Version 1.3.2 keeps the Python 3.14-ready stack while cleaning up hard-coded paths and making launcher/docs fully portable. See [CHANGELOG](CHANGELOG.md) for release notes.
 
 ## Features
 
