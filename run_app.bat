@@ -1,4 +1,6 @@
 @echo off
-cd /d "C:\Projects\Analyze_Chess"
-python "C:\Projects\Analyze_Chess\app.py"
+rem Launch Analyze_Chess from the script's directory so it works no matter where it's cloned.
+pushd "%~dp0"
+python app.py
+popd
 pause

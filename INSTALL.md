@@ -43,20 +43,21 @@ Create a convenient desktop shortcut for one-click access.
 **Option B: Manual PowerShell command**
 ```powershell
 $DesktopPath = (Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" Desktop).Desktop
+$RepoPath = "<path-to-your-Analyze_Chess-clone>"  # e.g., (Get-Location).Path if you're in the repo root
 $WshShell = New-Object -ComObject WScript.Shell
 $Shortcut = $WshShell.CreateShortcut("$DesktopPath\Analyze Chess.lnk")
-$Shortcut.TargetPath = "C:\Projects\Analyze_Chess\launch_analyze_chess.bat"
-$Shortcut.IconLocation = "C:\Projects\Analyze_Chess\assets\chess_icon.ico"
-$Shortcut.WorkingDirectory = "C:\Projects\Analyze_Chess"
+$Shortcut.TargetPath = "$RepoPath\launch_analyze_chess.bat"
+$Shortcut.IconLocation = "$RepoPath\assets\chess_icon.ico"
+$Shortcut.WorkingDirectory = $RepoPath
 $Shortcut.Save()
 ```
 
 **Option C: Manual creation**
 1. Right-click the desktop → New → Shortcut
-2. Point to `C:\Projects\Analyze_Chess\launch_analyze_chess.bat`
+2. Point to `launch_analyze_chess.bat` in your clone directory
 3. Name it "Analyze Chess"
 4. Right-click the shortcut → Properties → Change Icon
-5. Select `C:\Projects\Analyze_Chess\assets\chess_icon.ico`
+5. Select `assets\chess_icon.ico` from your clone
 
 **Launcher perks**
 - Activates the virtual environment automatically

@@ -1,7 +1,7 @@
 
-# Chess Analysis Web Application (v1.3.1)
+# Chess Analysis Web Application (v1.3.2)
 
-A comprehensive chess analysis tool powered by Stockfish engine with built-in AI recommendations and dependency management. Now updated to version 1.3.1 with Python 3.14 support, streamlined dependencies, and no external image processing dependencies.
+A comprehensive chess analysis tool powered by Stockfish engine with built-in AI recommendations and dependency management. Version 1.3.2 keeps the Python 3.14-ready stack while cleaning up hard-coded paths and making launcher/docs fully portable.
 
 ## Features
 
@@ -79,19 +79,20 @@ For convenient desktop access, use the included launch script or create a shortc
    ```powershell
    # Auto-detect Desktop path (handles OneDrive redirection)
    $DesktopPath = (Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" Desktop).Desktop
+   $RepoPath = "<path-to-your-Analyze_Chess-clone>"  # e.g., (Get-Location).Path if you're in the repo root
    $WshShell = New-Object -comObject WScript.Shell
    $Shortcut = $WshShell.CreateShortcut("$DesktopPath\Analyze Chess.lnk")
-   $Shortcut.TargetPath = "C:\Projects\Analyze_Chess\launch_analyze_chess.bat"
-   $Shortcut.IconLocation = "C:\Projects\Analyze_Chess\assets\chess_icon.ico"
-   $Shortcut.WorkingDirectory = "C:\Projects\Analyze_Chess"
+   $Shortcut.TargetPath = "$RepoPath\launch_analyze_chess.bat"
+   $Shortcut.IconLocation = "$RepoPath\assets\chess_icon.ico"
+   $Shortcut.WorkingDirectory = $RepoPath
    $Shortcut.Save()
    ```
 
 2. **Manual shortcut creation**:
    - Right-click on desktop → New → Shortcut
-   - Target: Path to `launch_analyze_chess.bat`
+   - Target: Path to `launch_analyze_chess.bat` in your clone
    - Name: "Analyze Chess"
-   - Change icon to `assets\chess_icon.ico`
+   - Change icon to `assets\chess_icon.ico` in your clone
 
 The desktop shortcut will:
 - Kill any running Python processes
@@ -126,16 +127,15 @@ The desktop shortcut will:
 - **Dependencies**: Flask, python-chess, requests, stockfish
 - **Dependency Management**: Real-time version checking with PyPI integration
 
-## Recent Updates (v1.3.1)
+## Recent Updates (v1.3.2)
 
 ### What's New:
-- ✅ **Removed Image Upload**: Eliminated all image upload/paste functionality for cleaner, more focused tool
-- ✅ **Zero Image Dependencies**: Removed PIL/Pillow, opencv-python, numpy dependencies
-- ✅ **Performance Improvements**: Faster startup and reduced memory footprint
-- ✅ **Python 3.14 Ready**: Full support for Python 3.12, 3.13, and 3.14
-- ✅ **Cleaner Codebase**: Removed 144 lines of unused image processing code
+- ✅ **Portable Launch Scripts**: Batch/PowerShell launchers now use script-relative paths so the app runs from any clone location without hard-coded drive letters.
+- ✅ **Docs Without Hard-Coded Paths**: README/INSTALL now show placeholder repo paths and OneDrive-safe desktop detection; no `C:\...` baked into instructions.
+- ✅ **Release Metadata Sync**: Version bumped to 1.3.2 across code and packaging metadata.
 
 ### Previous Updates:
+- v1.3.1: Removed image upload, dropped Pillow/OpenCV/numpy deps, improved performance, Python 3.14 ready
 - v1.2.5: Fixed CI build by removing conflicting dependencies
 - v1.2.4: Python 3.14 support, enhanced opening positions, auto-analysis
 - v1.2.3: Modal board expansion for opening positions with full-size visualization
